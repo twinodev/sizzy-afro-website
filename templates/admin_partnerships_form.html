@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Edit Partnership Plan' if plan else 'Create Partnership Plan' }} | Admin{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+  <div class="mb-8">
+    <p class="eyebrow">Partnership Plans Management</p>
+    <h1 class="text-3xl sm:text-4xl font-extrabold mt-2">{{ 'Edit Partnership Plan' if plan else 'Create New Partnership Plan' }}</h1>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-6 space-y-3">
+        {% for category, message in messages %}
+          <div class="rounded-xl px-4 py-3 text-sm font-medium {% if category == 'success' %}bg-emerald-500/20 border border-emerald-400/30 text-emerald-200{% else %}bg-pulse/20 border border-pulse/40 text-red-100{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" class="card-soft space-y-5">
+    <div>
+      <label for="name" class="block text-sm mb-2 text-afro-100">Plan Name *</label>
+      <input id="name" name="name" type="text" class="field-input" value="{{ plan.name if plan else '' }}" placeholder="e.g. Gold Partnership" required />
+    </div>
+
+    <div>
+      <label for="price" class="block text-sm mb-2 text-afro-100">Price</label>
+      <input id="price" name="price" type="text" class="field-input" value="{{ plan.price if plan else '' }}" placeholder="e.g. $500/month or Contact Us" />
+    </div>
+
+    <div>
+      <label for="description" class="block text-sm mb-2 text-afro-100">Description</label>
+      <textarea id="description" name="description" rows="4" class="field-input" placeholder="Describe this partnership tier...">{{ plan.description if plan else '' }}</textarea>
+    </div>
+
+    <div>
+      <label for="benefits" class="block text-sm mb-2 text-afro-100">Benefits (one per line)</label>
+      <textarea id="benefits" name="benefits" rows="6" class="field-input" placeholder="Logo on website&#10;Social media shoutouts&#10;Event booth space">{{ plan.benefits if plan else '' }}</textarea>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary">{{ 'Update Plan' if plan else 'Create Plan' }}</button>
+      <a href="{{ url_for('admin_partnerships') }}" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

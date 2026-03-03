@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Edit Event' if event else 'Create Event' }} | Admin{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+  <div class="mb-8">
+    <p class="eyebrow">Events Management</p>
+    <h1 class="text-3xl sm:text-4xl font-extrabold mt-2">{{ 'Edit Event' if event else 'Create New Event' }}</h1>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-6 space-y-3">
+        {% for category, message in messages %}
+          <div class="rounded-xl px-4 py-3 text-sm font-medium {% if category == 'success' %}bg-emerald-500/20 border border-emerald-400/30 text-emerald-200{% else %}bg-pulse/20 border border-pulse/40 text-red-100{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" class="card-soft space-y-5">
+    <div>
+      <label for="title" class="block text-sm mb-2 text-afro-100">Event Title *</label>
+      <input id="title" name="title" type="text" class="field-input" value="{{ event.title if event else '' }}" required />
+    </div>
+
+    <div>
+      <label for="event_date" class="block text-sm mb-2 text-afro-100">Event Date *</label>
+      <input id="event_date" name="event_date" type="date" class="field-input" value="{{ event.event_date if event else '' }}" required />
+    </div>
+
+    <div>
+      <label for="location" class="block text-sm mb-2 text-afro-100">Location</label>
+      <input id="location" name="location" type="text" class="field-input" value="{{ event.location if event else '' }}" placeholder="e.g. Kampala Community Center" />
+    </div>
+
+    <div>
+      <label for="description" class="block text-sm mb-2 text-afro-100">Description</label>
+      <textarea id="description" name="description" rows="5" class="field-input" placeholder="Tell people about this event...">{{ event.description if event else '' }}</textarea>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary">{{ 'Update Event' if event else 'Create Event' }}</button>
+      <a href="{{ url_for('admin_events') }}" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

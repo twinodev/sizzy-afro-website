@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Dance with Sizzy Afro | Community{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <p class="eyebrow">Community Growth</p>
+  <h1 class="text-4xl sm:text-5xl font-extrabold mt-3">Move Together. Grow Together.</h1>
+  <p class="mt-5 text-afro-100/90 max-w-3xl">This space helps your community connect through dance challenges, events, and collaborative energy around the Dance with Sizzy Afro brand.</p>
+
+  <div class="grid md:grid-cols-3 gap-6 mt-10">
+    <article class="card">
+      <h2 class="text-xl font-bold text-afro-200">Weekly Challenge</h2>
+      <p class="mt-3 text-afro-100/90">Drop a short combo every week and invite dancers to tag your page.</p>
+    </article>
+    <article class="card">
+      <h2 class="text-xl font-bold text-afro-200">Meetup Sessions</h2>
+      <p class="mt-3 text-afro-100/90">Host monthly meetup classes to convert followers into real community members.</p>
+    </article>
+    <article class="card">
+      <h2 class="text-xl font-bold text-afro-200">Creator Collabs</h2>
+      <p class="mt-3 text-afro-100/90">Partner with DJs, content creators, and dancers to expand your profile reach.</p>
+    </article>
+  </div>
+
+  <div class="mt-10 grid md:grid-cols-2 gap-6">
+    <article class="card-soft">
+      <p class="text-sm text-afro-200 font-semibold">Engagement Engine</p>
+      <h3 class="text-2xl font-bold mt-2">Structure that keeps people coming back</h3>
+      <p class="mt-3 text-afro-100/90">Blend online content prompts with in-person dance moments so your audience stays active, visible, and connected.</p>
+    </article>
+    <article class="card-soft">
+      <p class="text-sm text-afro-200 font-semibold">Community Rituals</p>
+      <h3 class="text-2xl font-bold mt-2">Create identity, not just events</h3>
+      <p class="mt-3 text-afro-100/90">Use consistent challenge hashtags, spotlight dancers weekly, and celebrate progress publicly.</p>
+    </article>
+  </div>
+
+  <div class="mt-8">
+    <a href="{{ url_for('contact') }}" class="btn-primary">Join the Sizzy Afro Circle</a>
+  </div>
+</section>
+{% endblock %}

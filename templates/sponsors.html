@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Sponsors | Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <p class="eyebrow">Our Sponsors</p>
+  <h1 class="text-4xl sm:text-5xl font-extrabold mt-3">Partners Supporting Our Movement</h1>
+  <p class="mt-5 text-afro-100/90 max-w-3xl">Thank you to our amazing sponsors who help make Dance with Sizzy Afro possible.</p>
+
+  <div class="mt-10 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for sponsor in sponsors %}
+      <article class="card text-center">
+        {% if sponsor.logo_url %}
+          <img src="{{ sponsor.logo_url }}" alt="{{ sponsor.name }}" class="h-16 w-auto mx-auto object-contain mb-3" />
+        {% endif %}
+        <h2 class="text-lg font-bold text-afro-200">{{ sponsor.name }}</h2>
+        {% if sponsor.tier %}
+          <p class="text-xs text-afro-300 mt-1">{{ sponsor.tier }} Partner</p>
+        {% endif %}
+        {% if sponsor.website %}
+          <a href="{{ sponsor.website }}" target="_blank" rel="noopener noreferrer" class="text-sm text-afro-200 hover:underline mt-2 inline-block">Visit Website</a>
+        {% endif %}
+      </article>
+    {% else %}
+      <div class="col-span-full text-center py-12">
+        <p class="text-afro-100/80">No sponsors listed yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

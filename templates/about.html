@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Dance with Sizzy Afro | Profile{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="grid lg:grid-cols-2 gap-10 items-start">
+    <div>
+      <p class="eyebrow">Your Brand Profile</p>
+      <h1 class="text-4xl sm:text-5xl font-extrabold mt-3">Dance with Sizzy Afro</h1>
+      <p class="mt-5 text-afro-100/90 leading-relaxed">Sizzy Afro is a vibrant dance brand rooted in African rhythm, expression, and joy. The mission is to inspire people to move confidently, embrace culture, and shine on every stage.</p>
+      <p class="mt-4 text-afro-100/90 leading-relaxed">The profile blends performance, training, and storytelling so your audience can discover your style and grow with you.</p>
+      <div class="mt-7 flex flex-wrap gap-2">
+        <span class="pill">Afro Fusion</span>
+        <span class="pill">Performance Coaching</span>
+        <span class="pill">Creator Training</span>
+      </div>
+    </div>
+    <div class="card-soft">
+      <h2 class="text-2xl font-bold text-afro-200">Signature Offerings</h2>
+      <ul class="mt-4 space-y-3 text-afro-100/90">
+        <li>• Afro Dance Beginner & Intermediate Classes</li>
+        <li>• Performance Coaching for Events & Stage</li>
+        <li>• Private Sessions for Confidence & Technique</li>
+        <li>• Choreography for Creators and Teams</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+  <div class="section-head">
+    <p class="eyebrow">Profile Growth Path</p>
+    <h2 class="section-title">How your brand visibility expands</h2>
+  </div>
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <article class="card">
+      <h3 class="font-bold text-afro-200">Audience Impact</h3>
+      <p class="mt-3 text-afro-100/90">Create a recognizable style that grows your profile online and offline.</p>
+    </article>
+    <article class="card">
+      <h3 class="font-bold text-afro-200">Content Ready</h3>
+      <p class="mt-3 text-afro-100/90">Design routines and moments that are easy to share across social platforms.</p>
+    </article>
+    <article class="card">
+      <h3 class="font-bold text-afro-200">Brand Voice</h3>
+      <p class="mt-3 text-afro-100/90">Position Dance with Sizzy Afro as joyful, bold, and community-driven.</p>
+    </article>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+  <div class="cta-band">
+    <div>
+      <p class="eyebrow">Next Move</p>
+      <h3 class="text-2xl sm:text-3xl font-bold mt-2">Ready to transform your profile into a movement brand?</h3>
+    </div>
+    <a href="{{ url_for('contact') }}" class="btn-primary">Book a Session</a>
+  </div>
+</section>
+{% endblock %}

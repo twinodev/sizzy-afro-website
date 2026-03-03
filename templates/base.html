@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Dance with Sizzy Afro{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}" />
+    <meta name="description" content="Dance with Sizzy Afro — Afro dance classes, performances, and community experiences." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <script>
+      tailwind = {
+        config: {
+          theme: {
+            extend: {
+              colors: {
+                afro: {
+                  50: '#fff8e8',
+                  100: '#ffefc7',
+                  200: '#ffd88a',
+                  300: '#ffc35d',
+                  400: '#ff9f3c',
+                  500: '#ff7b2f',
+                  600: '#e95822',
+                  700: '#b8391b',
+                  800: '#7a2515',
+                  900: '#43150d'
+                },
+                groove: '#4f46e5',
+                pulse: '#ef4444',
+                stage: '#12031f'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  </head>
+  <body class="bg-stage text-white min-h-screen flex flex-col font-[Manrope] antialiased">
+    <div class="site-aura" aria-hidden="true"></div>
+    <header class="sticky top-0 z-50 nav-shell">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
+        <a href="{{ url_for('home') }}" class="flex items-center gap-3 font-black text-lg sm:text-xl text-afro-200 tracking-wide">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Dance with Sizzy Afro logo" class="h-10 w-10 rounded-full border border-afro-300/50 object-cover shadow-lg shadow-afro-500/25" />
+          <span class="hidden sm:inline">Dance with Sizzy Afro</span>
+          <span class="sm:hidden">Sizzy Afro</span>
+        </a>
+        
+        <button id="mobile-menu-btn" class="lg:hidden text-afro-200 p-2" aria-label="Toggle menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+
+        <nav id="desktop-nav" class="hidden lg:flex items-center gap-1 sm:gap-2 text-sm sm:text-base rounded-full p-1 bg-white/5 border border-white/10">
+          <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
+          <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
+          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
+          <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
+          <a href="{{ url_for('contact') }}" class="nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
+        </nav>
+      </div>
+
+      <nav id="mobile-nav" class="lg:hidden hidden border-t border-white/10 bg-stage/95 backdrop-blur">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
+          <a href="{{ url_for('home') }}" class="mobile-nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
+          <a href="{{ url_for('about') }}" class="mobile-nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
+          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
+          <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
+          <a href="{{ url_for('contact') }}" class="mobile-nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="flex-1">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mt-16 border-t border-white/10">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-sm text-afro-100/80">
+        <div class="card-soft flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <p class="font-semibold text-afro-200">Dance with Sizzy Afro</p>
+            <p class="mt-1">Rhythm. Culture. Community.</p>
+          </div>
+          <div class="flex gap-2 text-xs sm:text-sm">
+            <a href="https://instagram.com/sizzyafro" target="_blank" rel="noopener noreferrer" class="social-link">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/>
+                </svg>
+              </span>
+              Instagram @sizzyafro
+            </a>
+            <a href="https://tiktok.com/@sizzyafro" target="_blank" rel="noopener noreferrer" class="social-link">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14.5 4V13.3C14.5 15.8 12.5 17.8 10 17.8C7.5 17.8 5.5 15.8 5.5 13.3C5.5 10.8 7.5 8.8 10 8.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M14.5 6.2C15.4 8.1 17.2 9.4 19.3 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10 8.8V10.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+              TikTok @sizzyafro
+            </a>
+            <a href="https://youtube.com/@sizzyafro" target="_blank" rel="noopener noreferrer" class="social-link">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3.2" y="6.2" width="17.6" height="11.6" rx="3.4" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M10 9.6L15.2 12L10 14.4V9.6Z" fill="currentColor"/>
+                </svg>
+              </span>
+              YouTube @sizzyafro
+            </a>
+            <a href="https://share.google/z1RKRQqBgC5HdmlEE" target="_blank" rel="noopener noreferrer" class="social-link">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 4.5C8 4.5 4.8 7.8 4.8 11.8C4.8 15.8 8 19.1 12 19.1C15.6 19.1 18.5 16.5 19.1 13.1H12V10.7H19.2C19.3 11.2 19.3 11.6 19.3 12.1C19.3 16.4 16.3 19.9 12 19.9C7.5 19.9 3.9 16.3 3.9 11.8C3.9 7.3 7.5 3.7 12 3.7C14.2 3.7 16.1 4.5 17.5 5.8L15.8 7.5C14.9 6.7 13.6 6.1 12 6.1Z" fill="currentColor"/>
+                </svg>
+              </span>
+              Google Business
+            </a>
+          </div>
+          <p>© 2026 All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <a
+      href="https://wa.me/256758359591?text=Hi%20Sizzy%20Afro%2C%20I%20want%20to%20book%20a%20dance%20session."
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat on WhatsApp"
+      class="whatsapp-float"
+    >
+      <span class="social-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4.2C7.7 4.2 4.2 7.6 4.2 11.9C4.2 13.3 4.6 14.7 5.4 15.8L4.5 19.4L8.2 18.5C9.3 19.2 10.6 19.6 12 19.6C16.3 19.6 19.8 16.2 19.8 11.9C19.8 7.6 16.3 4.2 12 4.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9.4 9.6C9.6 9.2 9.8 9.1 10.1 9.1C10.3 9.1 10.5 9.1 10.7 9.1C10.9 9.1 11.1 9.2 11.2 9.5C11.4 10 11.7 10.7 11.7 10.8C11.7 11 11.6 11.1 11.5 11.2C11.4 11.3 11.3 11.5 11.1 11.6C11 11.7 10.9 11.8 11 12C11.1 12.2 11.5 12.9 12.1 13.4C12.9 14.1 13.6 14.3 13.8 14.4C14 14.5 14.1 14.4 14.2 14.3C14.3 14.2 14.8 13.6 15 13.3C15.1 13.1 15.3 13.1 15.5 13.2C15.7 13.3 16.7 13.8 16.9 13.9C17.1 14 17.2 14 17.2 14.1C17.2 14.2 17.1 14.7 16.7 15.1C16.3 15.5 15.8 15.7 15.5 15.7C15.2 15.7 14.8 15.8 12.6 14.9C10.4 14 9 11.9 8.9 11.8C8.8 11.7 8 10.7 8 9.6C8 8.5 8.6 7.9 8.8 7.7" fill="currentColor"/>
+        </svg>
+      </span>
+      WhatsApp
+    </a>
+
+    <script>
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileNav = document.getElementById('mobile-nav');
+      
+      if (mobileMenuBtn && mobileNav) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileNav.classList.toggle('hidden');
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Events | Admin{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div>
+      <p class="eyebrow">Events Management</p>
+      <h1 class="text-3xl sm:text-4xl font-extrabold mt-2">All Events</h1>
+    </div>
+    <div class="flex gap-2">
+      <a href="{{ url_for('admin_events_create') }}" class="btn-primary">+ New Event</a>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">Dashboard</a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-6 space-y-3">
+        {% for category, message in messages %}
+          <div class="rounded-xl px-4 py-3 text-sm font-medium {% if category == 'success' %}bg-emerald-500/20 border border-emerald-400/30 text-emerald-200{% else %}bg-pulse/20 border border-pulse/40 text-red-100{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="card-soft overflow-x-auto">
+    <table class="w-full min-w-[700px] text-left text-sm">
+      <thead>
+        <tr class="border-b border-white/15 text-afro-200">
+          <th class="py-3 pr-4">Title</th>
+          <th class="py-3 pr-4">Date</th>
+          <th class="py-3 pr-4">Location</th>
+          <th class="py-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr class="border-b border-white/10 align-top">
+            <td class="py-3 pr-4 font-semibold text-afro-100">{{ event.title }}</td>
+            <td class="py-3 pr-4 text-afro-100/80">{{ event.event_date }}</td>
+            <td class="py-3 pr-4 text-afro-100/90">{{ event.location or '-' }}</td>
+            <td class="py-3">
+              <div class="flex gap-2">
+                <a href="{{ url_for('admin_events_edit', event_id=event.id) }}" class="text-afro-200 hover:underline text-xs">Edit</a>
+                <form method="POST" action="{{ url_for('admin_events_delete', event_id=event.id) }}" onsubmit="return confirm('Delete this event?');" class="inline">
+                  <button type="submit" class="text-pulse hover:underline text-xs">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="py-6 text-center text-afro-100/80">No events yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Dance with Sizzy Afro | Home{% endblock %}
+
+{% block content %}
+<section class="hero-glow hero-grid">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 grid lg:grid-cols-2 gap-10 items-center">
+    <div>
+      <p class="eyebrow">Afro Dance Movement</p>
+      <h1 class="mt-4 text-4xl sm:text-6xl font-extrabold leading-tight">Build your dance profile with bold Afro energy.</h1>
+      <p class="mt-6 text-lg text-afro-100/90 max-w-2xl">Dance with Sizzy Afro helps dancers and creators grow visibility, confidence, and community through vibrant classes and performance culture.</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="{{ url_for('about') }}" class="btn-primary">Build My Profile</a>
+        <a href="{{ url_for('community') }}" class="btn-secondary">Join Community</a>
+      </div>
+      <div class="mt-8 flex flex-wrap gap-2">
+        <span class="pill">Workshops</span>
+        <span class="pill">Private Coaching</span>
+        <span class="pill">Creator Choreography</span>
+      </div>
+    </div>
+    <aside class="card-hero">
+      <img src="{{ url_for('static', filename='images/hero.jpg') }}" alt="Sizzy Afro dance hero" class="hero-photo" />
+      <div class="flex items-center gap-3">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Dance with Sizzy Afro logo" class="h-14 w-14 rounded-full border border-afro-300/40 object-cover" />
+        <div>
+          <p class="text-afro-200 font-semibold">Dance with Sizzy Afro</p>
+          <p class="text-sm text-afro-100/80">Community-first dance brand</p>
+        </div>
+      </div>
+      <div class="mt-6 grid grid-cols-3 gap-3">
+        <div class="metric">
+          <p class="metric-value">4+</p>
+          <p class="metric-label">Programs</p>
+        </div>
+        <div class="metric">
+          <p class="metric-value">12</p>
+          <p class="metric-label">Monthly Sessions</p>
+        </div>
+        <div class="metric">
+          <p class="metric-value">100%</p>
+          <p class="metric-label">Vibe</p>
+        </div>
+      </div>
+      <p class="mt-5 text-sm text-afro-100/80">Used by dancers who want to perform stronger, show up online with confidence, and grow together.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+  <div class="section-head">
+    <p class="eyebrow">What You Get</p>
+    <h2 class="section-title">Modern dance brand experience</h2>
+  </div>
+  <div class="grid md:grid-cols-3 gap-6">
+    <article class="card">
+      <h2 class="text-xl font-bold text-afro-200">Show Your Profile</h2>
+      <p class="mt-3 text-afro-100/90">Position your dance identity with curated routines, showcase moments, and creator-focused visuals.</p>
+    </article>
+    <article class="card">
+      <h2 class="text-xl font-bold text-afro-200">Grow Your Community</h2>
+      <p class="mt-3 text-afro-100/90">Turn followers into active members with dance challenges, local sessions, and collaboration cycles.</p>
+    </article>
+    <article class="card">
+      <h2 class="text-xl font-bold text-afro-200">Book Experiences</h2>
+      <p class="mt-3 text-afro-100/90">Offer workshops, private coaching, and performance prep with a polished brand-first touch.</p>
+    </article>
+  </div>
+</section>
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+  <div class="cta-band">
+    <div>
+      <p class="eyebrow">Ready to elevate your movement?</p>
+      <h3 class="text-2xl sm:text-3xl font-bold mt-2">Let’s grow your profile and community with intentional Afro dance experiences.</h3>
+    </div>
+    <a href="{{ url_for('contact') }}" class="btn-primary">Start Collaboration</a>
+  </div>
+</section>
+{% endblock %}

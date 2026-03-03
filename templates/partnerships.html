@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Partnerships | Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <p class="eyebrow">Partnership Opportunities</p>
+  <h1 class="text-4xl sm:text-5xl font-extrabold mt-3">Partner With Us</h1>
+  <p class="mt-5 text-afro-100/90 max-w-3xl">Join us in bringing Afro dance culture to more people. Choose a partnership plan that fits your organization.</p>
+
+  <div class="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for plan in plans %}
+      <article class="card-soft">
+        <h2 class="text-2xl font-bold text-afro-200">{{ plan.name }}</h2>
+        {% if plan.price %}
+          <p class="text-3xl font-extrabold text-afro-300 mt-2">{{ plan.price }}</p>
+        {% endif %}
+        <p class="mt-4 text-afro-100/90">{{ plan.description or 'Support our dance community and gain visibility.' }}</p>
+        {% if plan.benefits %}
+          <div class="mt-4 text-sm text-afro-100/90">
+            <p class="font-semibold text-afro-200">Benefits:</p>
+            <p class="mt-1 whitespace-pre-line">{{ plan.benefits }}</p>
+          </div>
+        {% endif %}
+        <a href="{{ url_for('contact') }}" class="btn-primary mt-5">Get Started</a>
+      </article>
+    {% else %}
+      <div class="col-span-full text-center py-12">
+        <p class="text-afro-100/80">Partnership plans coming soon!</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
