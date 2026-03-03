@@ -8,6 +8,30 @@
     linear-gradient(170deg, #12031f 0%, #1a0730 45%, #2c1029 100%);
 }
 
+/* Force logo sizing */
+header img[alt*="logo"],
+header img[src*="logo.png"] {
+  max-width: 40px !important;
+  maxheight: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+/* Logo in card hero */
+.card-hero img[alt*="logo"],
+.card-hero img[src*="logo.png"] {
+  max-width: 56px !important;
+  max-height: 56px !important;
+  width: 56px !important;
+  height: 56px !important;
+}
+
+/* Favicon sizing */
+link[rel="icon"] {
+  max-width: 32px;
+  max-height: 32px;
+}
+
 .nav-shell {
   backdrop-filter: blur(12px);
   background: rgba(18, 3, 31, 0.78);
