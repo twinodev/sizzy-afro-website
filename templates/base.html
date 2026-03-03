@@ -9,6 +9,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Critical CSS - loads immediately -->
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Manrope, sans-serif; background: #12031f; color: white; min-height: 100vh; }
+      img { max-width: 100%; height: auto; }
+      
+      /* Force logo sizing immediately */
+      header img[alt*="logo"], header img[src*="logo.png"] {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 9999px;
+        object-fit: cover;
+      }
+      
+      /* Hide content until Tailwind loads */
+      body { opacity: 0; transition: opacity 0.2s; }
+      body.loaded { opacity: 1; }
+    </style>
 
     <script>
       tailwind = {
@@ -38,6 +57,12 @@
       }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Mark body as loaded when Tailwind is ready
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => document.body.classList.add('loaded'), 50);
+      });
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
   </head>
   <body class="bg-stage text-white min-h-screen flex flex-col font-[Manrope] antialiased">
