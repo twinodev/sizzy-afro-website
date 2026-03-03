@@ -482,8 +482,17 @@ def admin_partnerships_delete(plan_id):
     return redirect(url_for("admin_partnerships"))
 
 
-with app.app_context():
-    init_db()
+# Initialize database on first request
+@app.before_request
+def before_request():
+    """Initialize database if not already done"""
+    if not hasattr(app, '_db_initialized'):
+        try:
+            with app.app_context():
+                init_db()
+            app._db_initialized = True
+        except Exception as e:
+            print(f"Database initialization error: {e}")
 
 
 if __name__ == "__main__":
