@@ -4,7 +4,6 @@ from datetime import datetime
 from functools import wraps
 
 from flask import Flask, flash, g, redirect, render_template, request, session, url_for
-from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
@@ -18,8 +17,18 @@ app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
 app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@example.com")
+app.config["MAIL_SUPPRESS_SEND"] = True  # Disable actual sending during development
 
-mail = Mail(app)
+# Initialize mail lazily
+mail = None
+
+def get_mail():
+    """Get mail instance, initializing if needed"""
+    global mail
+    if mail is None:
+        from flask_mail import Mail
+        mail = Mail(app)
+    return mail
 
 
 def get_db():
@@ -103,12 +112,14 @@ def send_notification_email(subject, body):
     """Send email notification to admin"""
     try:
         if app.config["MAIL_USERNAME"] and app.config["ADMIN_EMAIL"]:
+            from flask_mail import Message
             msg = Message(
                 subject=subject,
                 recipients=[app.config["ADMIN_EMAIL"]],
                 body=body
             )
-            mail.send(msg)
+            mail_instance = get_mail()
+            mail_instance.send(msg)
             return True
     except Exception as e:
         print(f"Email notification failed: {e}")
