@@ -16,7 +16,7 @@ app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
-app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@example.com")
+app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@gmail.com")
 app.config["MAIL_SUPPRESS_SEND"] = True  # Disable actual sending during development
 
 # Initialize mail lazily
