@@ -164,6 +164,17 @@ class Post(db.Model):
     updated_at = db.Column(db.String(50), nullable=False)
 
 
+class Comment(db.Model):
+    __tablename__ = "comments"
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    approved = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.String(50), nullable=False)
+
+
 def init_db():
     """Initialize database tables"""
     with app.app_context():
@@ -413,15 +424,39 @@ def posts():
     return render_template("posts.html", posts=posts_list)
 
 
-@app.route("/posts/<int:post_id>")
+@app.route("/posts/<int:post_id>", methods=["GET", "POST"])
 def post_detail(post_id):
     post = Post.query.get_or_404(post_id)
     if not post.published:
         flash("This post is not published.", "error")
         return redirect(url_for("posts"))
-    
+
+    if request.method == "POST":
+        # Accept comments on posts
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        message = request.form.get("message", "").strip()
+
+        if not name or not email or not message:
+            flash("Please provide your name, email, and a comment.", "error")
+            return redirect(url_for("post_detail", post_id=post_id))
+
+        comment = Comment(
+            post_id=post.id,
+            name=name,
+            email=email,
+            message=message,
+            approved=True,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        db.session.add(comment)
+        db.session.commit()
+        flash("Thanks — your comment was posted.", "success")
+        return redirect(url_for("post_detail", post_id=post_id))
+
     related_posts = Post.query.filter(Post.published == True, Post.id != post_id).order_by(Post.created_at.desc()).limit(3).all()
-    return render_template("post_detail.html", post=post, related_posts=related_posts)
+    comments = Comment.query.filter_by(post_id=post.id, approved=True).order_by(Comment.id.asc()).all()
+    return render_template("post_detail.html", post=post, related_posts=related_posts, comments=comments)
 
 
 # Admin Events Management
@@ -768,6 +803,24 @@ def admin_posts_delete(post_id):
     db.session.commit()
     flash("Post deleted successfully.", "success")
     return redirect(url_for("admin_posts"))
+
+
+# Admin Submissions Management
+@app.route("/admin/submissions")
+@admin_required
+def admin_submissions():
+    submissions = Submission.query.order_by(Submission.id.desc()).all()
+    return render_template("admin_submissions.html", submissions=submissions)
+
+
+@app.route("/admin/submissions/delete/<int:submission_id>", methods=["POST"])
+@admin_required
+def admin_submissions_delete(submission_id):
+    submission = Submission.query.get_or_404(submission_id)
+    db.session.delete(submission)
+    db.session.commit()
+    flash("Submission deleted successfully.", "success")
+    return redirect(url_for("admin_submissions"))
 
 
 # Initialize database on startup (safely for serverless)
