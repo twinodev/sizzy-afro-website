@@ -25,7 +25,7 @@
     {% endif %}
   {% endwith %}
 
-  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <article class="card">
       <p class="text-afro-100/80 text-sm">Total submissions</p>
       <p class="text-3xl font-extrabold text-afro-200 mt-2">{{ total_submissions }}</p>
@@ -34,6 +34,11 @@
       <p class="text-afro-100/80 text-sm">Events</p>
       <p class="text-3xl font-extrabold text-afro-200 mt-2">{{ total_events }}</p>
       <a href="{{ url_for('admin_events') }}" class="text-xs text-afro-300 hover:underline mt-1 inline-block">Manage</a>
+    </article>
+    <article class="card">
+      <p class="text-afro-100/80 text-sm">Posts</p>
+      <p class="text-3xl font-extrabold text-afro-200 mt-2">{{ total_posts }}</p>
+      <a href="{{ url_for('admin_posts') }}" class="text-xs text-afro-300 hover:underline mt-1 inline-block">Manage</a>
     </article>
     <article class="card">
       <p class="text-afro-100/80 text-sm">Sponsors</p>

@@ -85,6 +85,7 @@
           <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
           <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
           <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('posts') }}" class="nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
           <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
           <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
           <a href="{{ url_for('contact') }}" class="nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
@@ -96,6 +97,7 @@
           <a href="{{ url_for('home') }}" class="mobile-nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
           <a href="{{ url_for('about') }}" class="mobile-nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
           <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('posts') }}" class="mobile-nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
           <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
           <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
           <a href="{{ url_for('contact') }}" class="mobile-nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
@@ -108,13 +110,13 @@
     </main>
 
     <footer class="mt-16 border-t border-white/10">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-sm text-afro-100/80">
-        <div class="card-soft flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-sm text-afro-100/80">
+        <div class="card-soft flex flex-col gap-6">
           <div>
             <p class="font-semibold text-afro-200">Dance with Sizzy Afro</p>
-            <p class="mt-1">Rhythm. Culture. Community.</p>
+            <p class="mt-1 text-xs sm:text-sm">Rhythm. Culture. Community.</p>
           </div>
-          <div class="flex gap-2 text-xs sm:text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
             <a href="https://instagram.com/sizzyafro" target="_blank" rel="noopener noreferrer" class="social-link">
               <span class="social-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -123,7 +125,7 @@
                   <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/>
                 </svg>
               </span>
-              Instagram @sizzyafro
+              <span>Instagram</span>
             </a>
             <a href="https://tiktok.com/@sizzyafro" target="_blank" rel="noopener noreferrer" class="social-link">
               <span class="social-icon" aria-hidden="true">
@@ -133,7 +135,7 @@
                   <path d="M10 8.8V10.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
               </span>
-              TikTok @sizzyafro
+              <span>TikTok</span>
             </a>
             <a href="https://youtube.com/@sizzyafro" target="_blank" rel="noopener noreferrer" class="social-link">
               <span class="social-icon" aria-hidden="true">
@@ -142,7 +144,7 @@
                   <path d="M10 9.6L15.2 12L10 14.4V9.6Z" fill="currentColor"/>
                 </svg>
               </span>
-              YouTube @sizzyafro
+              <span>YouTube</span>
             </a>
             <a href="https://share.google/z1RKRQqBgC5HdmlEE" target="_blank" rel="noopener noreferrer" class="social-link">
               <span class="social-icon" aria-hidden="true">
@@ -150,10 +152,10 @@
                   <path d="M12 4.5C8 4.5 4.8 7.8 4.8 11.8C4.8 15.8 8 19.1 12 19.1C15.6 19.1 18.5 16.5 19.1 13.1H12V10.7H19.2C19.3 11.2 19.3 11.6 19.3 12.1C19.3 16.4 16.3 19.9 12 19.9C7.5 19.9 3.9 16.3 3.9 11.8C3.9 7.3 7.5 3.7 12 3.7C14.2 3.7 16.1 4.5 17.5 5.8L15.8 7.5C14.9 6.7 13.6 6.1 12 6.1Z" fill="currentColor"/>
                 </svg>
               </span>
-              Google Business
+              <span>Google Business</span>
             </a>
           </div>
-          <p>© 2026 All rights reserved.</p>
+          <p class="text-xs text-afro-100/60 border-t border-white/10 pt-6">© 2026 All rights reserved.</p>
         </div>
       </div>
     </footer>

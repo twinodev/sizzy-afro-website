@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{% if post %}Edit Post{% else %}Create Post{% endif %} — Admin — Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+  <div class="mb-8">
+    <a href="{{ url_for('admin_posts') }}" class="text-afro-300 hover:text-afro-200 text-sm font-semibold mb-6 inline-block transition-colors">
+      ← Back to Posts
+    </a>
+    <h1 class="text-3xl sm:text-4xl font-bold text-white">
+      {% if post %}Edit Post{% else %}Create New Post{% endif %}
+    </h1>
+  </div>
+
+  <form method="POST" class="card space-y-6">
+    <!-- Title -->
+    <div>
+      <label for="title" class="block text-sm font-semibold text-white mb-2">Title*</label>
+      <input 
+        type="text" 
+        id="title" 
+        name="title" 
+        value="{{ post.title if post else '' }}"
+        placeholder="e.g., Behind the Scenes: Afro Dance Workshop"
+        class="field-input"
+        required
+      />
+    </div>
+
+    <!-- Excerpt -->
+    <div>
+      <label for="excerpt" class="block text-sm font-semibold text-white mb-2">Excerpt</label>
+      <textarea 
+        id="excerpt" 
+        name="excerpt" 
+        placeholder="Brief summary of the post (optional)"
+        rows="2"
+        class="field-input"
+      >{{ post.excerpt if post else '' }}</textarea>
+      <p class="text-xs text-afro-100/50 mt-1">If left empty, the first 150 characters of content will be used.</p>
+    </div>
+
+    <!-- Content -->
+    <div>
+      <label for="content" class="block text-sm font-semibold text-white mb-2">Content*</label>
+      <textarea 
+        id="content" 
+        name="content" 
+        placeholder="Write your post content here. Separate paragraphs with blank lines."
+        rows="12"
+        class="field-input"
+        required
+      >{{ post.content if post else '' }}</textarea>
+      <p class="text-xs text-afro-100/50 mt-1">Use blank lines to separate paragraphs.</p>
+    </div>
+
+    <!-- Image URL -->
+    <div>
+      <label for="image_url" class="block text-sm font-semibold text-white mb-2">Featured Image URL</label>
+      <input 
+        type="url" 
+        id="image_url" 
+        name="image_url" 
+        value="{{ post.image_url if post else '' }}"
+        placeholder="https://example.com/image.jpg"
+        class="field-input"
+      />
+      {% if post and post.image_url %}
+        <div class="mt-3 rounded-lg overflow-hidden border border-white/10 max-w-sm">
+          <img src="{{ post.image_url }}" alt="Featured image" class="w-full h-40 object-cover"/>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Published Status -->
+    <div>
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input 
+          type="checkbox" 
+          name="published" 
+          value="on"
+          {% if post and post.published or not post %}checked{% endif %}
+          class="w-4 h-4 rounded"
+        />
+        <span class="text-sm font-semibold text-white">Published</span>
+      </label>
+      <p class="text-xs text-afro-100/50 mt-1 ml-7">Uncheck to save as draft.</p>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex flex-col sm:flex-row gap-3 border-t border-white/10 pt-6">
+      <button type="submit" class="btn-primary">
+        {% if post %}Update Post{% else %}Publish Post{% endif %}
+      </button>
+      <a href="{{ url_for('admin_posts') }}" class="btn-secondary text-center">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+
+<style>
+  .field-input {
+    width: 100%;
+    border-radius: 0.85rem;
+    background: rgba(18, 3, 31, 0.45);
+    border: 1px solid rgba(255, 159, 60, 0.3);
+    padding: 0.8rem 0.95rem;
+    font-size: 0.95rem;
+    color: white;
+    font-family: inherit;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .field-input::placeholder {
+    color: rgba(255, 239, 199, 0.5);
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: rgba(255, 159, 60, 0.6);
+    background: rgba(18, 3, 31, 0.6);
+  }
+</style>
+{% endblock %}

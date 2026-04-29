@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Posts — Admin — Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl sm:text-4xl font-bold text-white">Manage Posts</h1>
+      <p class="text-afro-100/60 mt-2">Create, edit, and organize your blog posts.</p>
+    </div>
+    <a href="{{ url_for('admin_posts_create') }}" class="btn-primary">+ New Post</a>
+  </div>
+
+  {% if posts %}
+    <div class="card space-y-0">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm sm:text-base">
+          <thead class="border-b border-white/10">
+            <tr>
+              <th class="text-left py-4 px-4 font-semibold text-afro-200">Title</th>
+              <th class="text-left py-4 px-4 font-semibold text-afro-200">Status</th>
+              <th class="text-left py-4 px-4 font-semibold text-afro-200 hidden sm:table-cell">Created</th>
+              <th class="text-right py-4 px-4 font-semibold text-afro-200">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for post in posts %}
+              <tr class="border-t border-white/10 hover:bg-white/5 transition-colors">
+                <td class="py-4 px-4">
+                  <div class="font-semibold text-white truncate">{{ post.title }}</div>
+                  <div class="text-xs text-afro-100/50 mt-1 line-clamp-1">{{ post.excerpt or post.content[:100] }}...</div>
+                </td>
+                <td class="py-4 px-4">
+                  <span class="pill">
+                    {% if post.published %}
+                      <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Published
+                    {% else %}
+                      <span class="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>Draft
+                    {% endif %}
+                  </span>
+                </td>
+                <td class="py-4 px-4 hidden sm:table-cell text-afro-100/60">{{ post.created_at[:10] }}</td>
+                <td class="py-4 px-4 text-right">
+                  <div class="flex justify-end gap-2">
+                    <a href="{{ url_for('admin_posts_edit', post_id=post.id) }}" class="text-afro-300 hover:text-afro-200 text-xs sm:text-sm font-semibold transition-colors">
+                      Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('admin_posts_delete', post_id=post.id) }}" class="inline"
+                          onsubmit="return confirm('Are you sure you want to delete this post?');">
+                      <button type="submit" class="text-red-400 hover:text-red-300 text-xs sm:text-sm font-semibold transition-colors">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card-soft text-center py-12">
+      <p class="text-afro-100/60 text-lg mb-6">No posts yet.</p>
+      <a href="{{ url_for('admin_posts_create') }}" class="btn-primary">Create Your First Post</a>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+{% endblock %}

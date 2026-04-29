@@ -151,6 +151,18 @@ class PartnershipPlan(db.Model):
     created_at = db.Column(db.String(50), nullable=False)
 
 
+class Post(db.Model):
+    __tablename__ = "posts"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    excerpt = db.Column(db.Text)
+    image_url = db.Column(db.Text)
+    published = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.String(50), nullable=False)
+    updated_at = db.Column(db.String(50), nullable=False)
+
+
 def init_db():
     """Initialize database tables"""
     with app.app_context():
@@ -354,6 +366,7 @@ def admin_dashboard():
     submissions = Submission.query.order_by(Submission.id.desc()).all()
     total_submissions = Submission.query.count()
     total_events = Event.query.count()
+    total_posts = Post.query.count()
     total_sponsors = Sponsor.query.count()
     total_plans = PartnershipPlan.query.count()
 
@@ -362,6 +375,7 @@ def admin_dashboard():
         submissions=submissions,
         total_submissions=total_submissions,
         total_events=total_events,
+        total_posts=total_posts,
         total_sponsors=total_sponsors,
         total_plans=total_plans,
     )
@@ -384,6 +398,23 @@ def sponsors():
 def partnerships():
     plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
     return render_template("partnerships.html", plans=plans)
+
+
+@app.route("/posts")
+def posts():
+    posts_list = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).all()
+    return render_template("posts.html", posts=posts_list)
+
+
+@app.route("/posts/<int:post_id>")
+def post_detail(post_id):
+    post = Post.query.get_or_404(post_id)
+    if not post.published:
+        flash("This post is not published.", "error")
+        return redirect(url_for("posts"))
+    
+    related_posts = Post.query.filter(Post.published == True, Post.id != post_id).order_by(Post.created_at.desc()).limit(3).all()
+    return render_template("post_detail.html", post=post, related_posts=related_posts)
 
 
 # Admin Events Management
@@ -632,6 +663,86 @@ def admin_partnerships_delete(plan_id):
     db.session.commit()
     flash("Partnership plan deleted successfully.", "success")
     return redirect(url_for("admin_partnerships"))
+
+
+# Admin Posts Management
+@app.route("/admin/posts")
+@admin_required
+def admin_posts():
+    posts_list = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template("admin_posts.html", posts=posts_list)
+
+
+@app.route("/admin/posts/create", methods=["GET", "POST"])
+@admin_required
+def admin_posts_create():
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        content = request.form.get("content", "").strip()
+        excerpt = request.form.get("excerpt", "").strip()
+        image_url = request.form.get("image_url", "").strip()
+        published = request.form.get("published") == "on"
+
+        if not title or not content:
+            flash("Please enter a title and content for the post.", "error")
+            return redirect(url_for("admin_posts_create"))
+
+        post = Post(
+            title=title,
+            content=content,
+            excerpt=excerpt or None,
+            image_url=image_url or None,
+            published=published,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        db.session.add(post)
+        db.session.commit()
+
+        flash("Post created successfully.", "success")
+        return redirect(url_for("admin_posts"))
+
+    return render_template("admin_posts_form.html", post=None)
+
+
+@app.route("/admin/posts/edit/<int:post_id>", methods=["GET", "POST"])
+@admin_required
+def admin_posts_edit(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        content = request.form.get("content", "").strip()
+        excerpt = request.form.get("excerpt", "").strip()
+        image_url = request.form.get("image_url", "").strip()
+        published = request.form.get("published") == "on"
+
+        if not title or not content:
+            flash("Please enter a title and content for the post.", "error")
+            return redirect(url_for("admin_posts_edit", post_id=post_id))
+
+        post.title = title
+        post.content = content
+        post.excerpt = excerpt or None
+        post.image_url = image_url or None
+        post.published = published
+        post.updated_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        db.session.commit()
+
+        flash("Post updated successfully.", "success")
+        return redirect(url_for("admin_posts"))
+
+    return render_template("admin_posts_form.html", post=post)
+
+
+@app.route("/admin/posts/delete/<int:post_id>", methods=["POST"])
+@admin_required
+def admin_posts_delete(post_id):
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
+    db.session.commit()
+    flash("Post deleted successfully.", "success")
+    return redirect(url_for("admin_posts"))
 
 
 # Initialize database on startup (safely for serverless)
