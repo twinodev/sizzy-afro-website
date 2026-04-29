@@ -1,0 +1,5 @@
+{
+  "buildCommand": "pip install -r requirements.txt",
+  "devCommand": "python app.py",
+  "framework": "flask"
+}

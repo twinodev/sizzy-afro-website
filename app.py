@@ -456,11 +456,15 @@ def admin_partnerships_delete(plan_id):
     return redirect(url_for("admin_partnerships"))
 
 
-# Initialize database on startup
-with app.app_context():
-    init_db()
+# Initialize database on startup (safely for serverless)
+try:
+    with app.app_context():
+        init_db()
+except Exception as e:
+    print(f"Database initialization error: {e}")
 
 
 if __name__ == "__main__":
     debug = os.getenv("FLASK_DEBUG", "True").lower() == "true"
     app.run(debug=debug, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
