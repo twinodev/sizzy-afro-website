@@ -97,6 +97,7 @@ app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
 app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 app.config["SUPABASE_FLYER_BUCKET"] = os.getenv("SUPABASE_FLYER_BUCKET", "event-flyers")
 app.config["SUPABASE_LOGO_BUCKET"] = os.getenv("SUPABASE_LOGO_BUCKET", "sponsor-logos")
+app.config["SUPABASE_POST_BUCKET"] = os.getenv("SUPABASE_POST_BUCKET", "post-images")
 
 # Initialize mail lazily
 mail = None
@@ -241,6 +242,10 @@ def _upload_flyer_to_supabase(file_storage):
 
 def _upload_logo_to_supabase(file_storage):
     return _upload_image_to_supabase(file_storage, app.config["SUPABASE_LOGO_BUCKET"], "sponsors", "logo")
+
+
+def _upload_post_image_to_supabase(file_storage):
+    return _upload_image_to_supabase(file_storage, app.config["SUPABASE_POST_BUCKET"], "posts", "post image")
 
 
 def admin_required(view_func):
@@ -681,11 +686,20 @@ def admin_posts_create():
         content = request.form.get("content", "").strip()
         excerpt = request.form.get("excerpt", "").strip()
         image_url = request.form.get("image_url", "").strip()
+        image_file = request.files.get("image_file")
         published = request.form.get("published") == "on"
 
         if not title or not content:
             flash("Please enter a title and content for the post.", "error")
             return redirect(url_for("admin_posts_create"))
+
+        # Prefer uploaded file over manual URL when provided
+        if image_file and image_file.filename:
+            try:
+                image_url = _upload_post_image_to_supabase(image_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_posts_create"))
 
         post = Post(
             title=title,
@@ -715,11 +729,20 @@ def admin_posts_edit(post_id):
         content = request.form.get("content", "").strip()
         excerpt = request.form.get("excerpt", "").strip()
         image_url = request.form.get("image_url", "").strip()
+        image_file = request.files.get("image_file")
         published = request.form.get("published") == "on"
 
         if not title or not content:
             flash("Please enter a title and content for the post.", "error")
             return redirect(url_for("admin_posts_edit", post_id=post_id))
+
+        # If a file was uploaded, attempt to upload and override the image URL
+        if image_file and image_file.filename:
+            try:
+                image_url = _upload_post_image_to_supabase(image_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_posts_edit", post_id=post_id))
 
         post.title = title
         post.content = content
