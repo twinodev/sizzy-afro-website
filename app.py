@@ -9,11 +9,16 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
 
 # PostgreSQL Configuration
-database_url = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/dbname")
+# Check for both DATABASE_URL (standard) and POSTGRES_URL (Supabase)
+database_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL", "postgresql://user:password@localhost/dbname")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 3600,
+}
 
 db = SQLAlchemy(app)
 
