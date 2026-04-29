@@ -2,6 +2,13 @@
 
 {% block title %}{{ post.title }} — Dance with Sizzy Afro{% endblock %}
 
+{# Per-post meta for Open Graph, Twitter and JSON-LD #}
+{% set meta_title = post.title %}
+{% set meta_description = post.excerpt or (post.content[:150]) %}
+{% set meta_image = post.image_url or url_for('static', filename='images/hero.jpg', _external=True) %}
+{% set canonical_url = url_for('post_detail', post_id=post.id, _external=True) %}
+{% set og_type = 'article' %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
   <article>
@@ -180,4 +187,19 @@
     color: #ffe4b5;
   }
 </style>
+{% endblock %}
+{% block extra_head %}
+  <script type="application/ld+json">
+  {{ {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": post.title,
+      "image": [ meta_image ],
+      "author": { "@type": "Person", "name": "Sizzy Afro" },
+      "publisher": { "@type": "Organization", "name": "Dance with Sizzy Afro", "logo": { "@type": "ImageObject", "url": url_for('static', filename='images/logo.png', _external=True) } },
+      "datePublished": post.created_at,
+      "dateModified": post.updated_at,
+      "description": meta_description
+    }|tojson | safe }}
+  </script>
 {% endblock %}

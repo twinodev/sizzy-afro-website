@@ -6,6 +6,23 @@
     <title>{% block title %}Dance with Sizzy Afro{% endblock %}</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}" />
     <meta name="description" content="Dance with Sizzy Afro — Afro dance classes, performances, and community experiences." />
+    {# Open Graph / Twitter meta (defaults can be overridden by templates via meta_* variables) #}
+    <meta name="description" content="{{ meta_description|default('Dance with Sizzy Afro — Afro dance classes, performances, and community experiences.')|e }}" />
+    <link rel="canonical" href="{{ canonical_url|default(request.url) }}" />
+
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="{{ og_type|default('website') }}" />
+    <meta property="og:site_name" content="Dance with Sizzy Afro" />
+    <meta property="og:title" content="{{ meta_title|default('Dance with Sizzy Afro')|e }}" />
+    <meta property="og:description" content="{{ meta_description|default('Dance with Sizzy Afro — Afro dance classes, performances, and community experiences.')|e }}" />
+    <meta property="og:image" content="{{ meta_image|default(url_for('static', filename='images/hero.jpg', _external=True)) }}" />
+    <meta property="og:url" content="{{ canonical_url|default(request.url) }}" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@sizzyafro" />
+    <meta name="twitter:title" content="{{ meta_title|default('Dance with Sizzy Afro')|e }}" />
+    <meta name="twitter:description" content="{{ meta_description|default('Dance with Sizzy Afro — Afro dance classes, performances, and community experiences.')|e }}" />
+    <meta name="twitter:image" content="{{ meta_image|default(url_for('static', filename='images/hero.jpg', _external=True)) }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
