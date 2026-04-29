@@ -1,13 +1,21 @@
 import os
-import sqlite3
 from datetime import datetime
 from functools import wraps
 
-from flask import Flask, flash, g, redirect, render_template, request, session, url_for
+from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
-app.config["DATABASE"] = "submissions.db"
+
+# PostgreSQL Configuration
+database_url = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/dbname")
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
 
 # Email configuration
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
@@ -31,70 +39,50 @@ def get_mail():
     return mail
 
 
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(app.config["DATABASE"])
-        g.db.row_factory = sqlite3.Row
-    return g.db
+# Database Models
+class Submission(db.Model):
+    __tablename__ = "submissions"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text)
+    created_at = db.Column(db.String(50), nullable=False)
+
+
+class Event(db.Model):
+    __tablename__ = "events"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    event_date = db.Column(db.String(50), nullable=False)
+    location = db.Column(db.String(255))
+    created_at = db.Column(db.String(50), nullable=False)
+
+
+class Sponsor(db.Model):
+    __tablename__ = "sponsors"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    logo_url = db.Column(db.Text)
+    website = db.Column(db.String(255))
+    tier = db.Column(db.String(50))
+    created_at = db.Column(db.String(50), nullable=False)
+
+
+class PartnershipPlan(db.Model):
+    __tablename__ = "partnership_plans"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.String(50))
+    benefits = db.Column(db.Text)
+    created_at = db.Column(db.String(50), nullable=False)
 
 
 def init_db():
-    db = get_db()
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS submissions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL,
-            message TEXT,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT,
-            event_date TEXT NOT NULL,
-            location TEXT,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS sponsors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            logo_url TEXT,
-            website TEXT,
-            tier TEXT,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS partnership_plans (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            description TEXT,
-            price TEXT,
-            benefits TEXT,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    db.commit()
-
-
-@app.teardown_appcontext
-def close_db(_exception):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
+    """Initialize database tables"""
+    with app.app_context():
+        db.create_all()
 
 
 def admin_required(view_func):
@@ -152,12 +140,14 @@ def contact():
             flash("Please enter your name and email to join the community.", "error")
             return redirect(url_for("contact"))
 
-        db = get_db()
-        db.execute(
-            "INSERT INTO submissions (name, email, message, created_at) VALUES (?, ?, ?, ?)",
-            (name, email, message, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")),
+        submission = Submission(
+            name=name,
+            email=email,
+            message=message,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         )
-        db.commit()
+        db.session.add(submission)
+        db.session.commit()
 
         # Send email notification
         email_body = f"""
@@ -215,14 +205,11 @@ def admin_logout():
 @app.route("/admin")
 @admin_required
 def admin_dashboard():
-    db = get_db()
-    submissions = db.execute(
-        "SELECT id, name, email, message, created_at FROM submissions ORDER BY id DESC"
-    ).fetchall()
-    total_submissions = db.execute("SELECT COUNT(*) FROM submissions").fetchone()[0]
-    total_events = db.execute("SELECT COUNT(*) FROM events").fetchone()[0]
-    total_sponsors = db.execute("SELECT COUNT(*) FROM sponsors").fetchone()[0]
-    total_plans = db.execute("SELECT COUNT(*) FROM partnership_plans").fetchone()[0]
+    submissions = Submission.query.order_by(Submission.id.desc()).all()
+    total_submissions = Submission.query.count()
+    total_events = Event.query.count()
+    total_sponsors = Sponsor.query.count()
+    total_plans = PartnershipPlan.query.count()
 
     return render_template(
         "admin_dashboard.html",
@@ -237,28 +224,19 @@ def admin_dashboard():
 # Public routes
 @app.route("/events")
 def events():
-    db = get_db()
-    events_list = db.execute(
-        "SELECT id, title, description, event_date, location FROM events ORDER BY event_date ASC"
-    ).fetchall()
+    events_list = Event.query.order_by(Event.event_date.asc()).all()
     return render_template("events.html", events=events_list)
 
 
 @app.route("/sponsors")
 def sponsors():
-    db = get_db()
-    sponsors_list = db.execute(
-        "SELECT id, name, logo_url, website, tier FROM sponsors ORDER BY tier DESC, name ASC"
-    ).fetchall()
+    sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
     return render_template("sponsors.html", sponsors=sponsors_list)
 
 
 @app.route("/partnerships")
 def partnerships():
-    db = get_db()
-    plans = db.execute(
-        "SELECT id, name, description, price, benefits FROM partnership_plans ORDER BY id ASC"
-    ).fetchall()
+    plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
     return render_template("partnerships.html", plans=plans)
 
 
@@ -266,10 +244,7 @@ def partnerships():
 @app.route("/admin/events")
 @admin_required
 def admin_events():
-    db = get_db()
-    events_list = db.execute(
-        "SELECT id, title, event_date, location, created_at FROM events ORDER BY event_date DESC"
-    ).fetchall()
+    events_list = Event.query.order_by(Event.event_date.desc()).all()
     return render_template("admin_events.html", events=events_list)
 
 
@@ -286,12 +261,15 @@ def admin_events_create():
             flash("Title and event date are required.", "error")
             return redirect(url_for("admin_events_create"))
 
-        db = get_db()
-        db.execute(
-            "INSERT INTO events (title, description, event_date, location, created_at) VALUES (?, ?, ?, ?, ?)",
-            (title, description, event_date, location, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")),
+        event = Event(
+            title=title,
+            description=description,
+            event_date=event_date,
+            location=location,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         )
-        db.commit()
+        db.session.add(event)
+        db.session.commit()
         flash("Event created successfully.", "success")
         return redirect(url_for("admin_events"))
 
@@ -301,12 +279,7 @@ def admin_events_create():
 @app.route("/admin/events/edit/<int:event_id>", methods=["GET", "POST"])
 @admin_required
 def admin_events_edit(event_id):
-    db = get_db()
-    event = db.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-
-    if not event:
-        flash("Event not found.", "error")
-        return redirect(url_for("admin_events"))
+    event = Event.query.get_or_404(event_id)
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
@@ -318,11 +291,11 @@ def admin_events_edit(event_id):
             flash("Title and event date are required.", "error")
             return redirect(url_for("admin_events_edit", event_id=event_id))
 
-        db.execute(
-            "UPDATE events SET title = ?, description = ?, event_date = ?, location = ? WHERE id = ?",
-            (title, description, event_date, location, event_id),
-        )
-        db.commit()
+        event.title = title
+        event.description = description
+        event.event_date = event_date
+        event.location = location
+        db.session.commit()
         flash("Event updated successfully.", "success")
         return redirect(url_for("admin_events"))
 
@@ -332,9 +305,9 @@ def admin_events_edit(event_id):
 @app.route("/admin/events/delete/<int:event_id>", methods=["POST"])
 @admin_required
 def admin_events_delete(event_id):
-    db = get_db()
-    db.execute("DELETE FROM events WHERE id = ?", (event_id,))
-    db.commit()
+    event = Event.query.get_or_404(event_id)
+    db.session.delete(event)
+    db.session.commit()
     flash("Event deleted successfully.", "success")
     return redirect(url_for("admin_events"))
 
@@ -343,10 +316,7 @@ def admin_events_delete(event_id):
 @app.route("/admin/sponsors")
 @admin_required
 def admin_sponsors():
-    db = get_db()
-    sponsors_list = db.execute(
-        "SELECT id, name, tier, website, created_at FROM sponsors ORDER BY tier DESC, name ASC"
-    ).fetchall()
+    sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
     return render_template("admin_sponsors.html", sponsors=sponsors_list)
 
 
@@ -363,12 +333,15 @@ def admin_sponsors_create():
             flash("Sponsor name is required.", "error")
             return redirect(url_for("admin_sponsors_create"))
 
-        db = get_db()
-        db.execute(
-            "INSERT INTO sponsors (name, logo_url, website, tier, created_at) VALUES (?, ?, ?, ?, ?)",
-            (name, logo_url, website, tier, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")),
+        sponsor = Sponsor(
+            name=name,
+            logo_url=logo_url,
+            website=website,
+            tier=tier,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         )
-        db.commit()
+        db.session.add(sponsor)
+        db.session.commit()
         flash("Sponsor created successfully.", "success")
         return redirect(url_for("admin_sponsors"))
 
@@ -378,12 +351,7 @@ def admin_sponsors_create():
 @app.route("/admin/sponsors/edit/<int:sponsor_id>", methods=["GET", "POST"])
 @admin_required
 def admin_sponsors_edit(sponsor_id):
-    db = get_db()
-    sponsor = db.execute("SELECT * FROM sponsors WHERE id = ?", (sponsor_id,)).fetchone()
-
-    if not sponsor:
-        flash("Sponsor not found.", "error")
-        return redirect(url_for("admin_sponsors"))
+    sponsor = Sponsor.query.get_or_404(sponsor_id)
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
@@ -395,11 +363,11 @@ def admin_sponsors_edit(sponsor_id):
             flash("Sponsor name is required.", "error")
             return redirect(url_for("admin_sponsors_edit", sponsor_id=sponsor_id))
 
-        db.execute(
-            "UPDATE sponsors SET name = ?, logo_url = ?, website = ?, tier = ? WHERE id = ?",
-            (name, logo_url, website, tier, sponsor_id),
-        )
-        db.commit()
+        sponsor.name = name
+        sponsor.logo_url = logo_url
+        sponsor.website = website
+        sponsor.tier = tier
+        db.session.commit()
         flash("Sponsor updated successfully.", "success")
         return redirect(url_for("admin_sponsors"))
 
@@ -409,9 +377,9 @@ def admin_sponsors_edit(sponsor_id):
 @app.route("/admin/sponsors/delete/<int:sponsor_id>", methods=["POST"])
 @admin_required
 def admin_sponsors_delete(sponsor_id):
-    db = get_db()
-    db.execute("DELETE FROM sponsors WHERE id = ?", (sponsor_id,))
-    db.commit()
+    sponsor = Sponsor.query.get_or_404(sponsor_id)
+    db.session.delete(sponsor)
+    db.session.commit()
     flash("Sponsor deleted successfully.", "success")
     return redirect(url_for("admin_sponsors"))
 
@@ -420,10 +388,7 @@ def admin_sponsors_delete(sponsor_id):
 @app.route("/admin/partnerships")
 @admin_required
 def admin_partnerships():
-    db = get_db()
-    plans = db.execute(
-        "SELECT id, name, price, created_at FROM partnership_plans ORDER BY id ASC"
-    ).fetchall()
+    plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
     return render_template("admin_partnerships.html", plans=plans)
 
 
@@ -440,12 +405,15 @@ def admin_partnerships_create():
             flash("Plan name is required.", "error")
             return redirect(url_for("admin_partnerships_create"))
 
-        db = get_db()
-        db.execute(
-            "INSERT INTO partnership_plans (name, description, price, benefits, created_at) VALUES (?, ?, ?, ?, ?)",
-            (name, description, price, benefits, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")),
+        plan = PartnershipPlan(
+            name=name,
+            description=description,
+            price=price,
+            benefits=benefits,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         )
-        db.commit()
+        db.session.add(plan)
+        db.session.commit()
         flash("Partnership plan created successfully.", "success")
         return redirect(url_for("admin_partnerships"))
 
@@ -455,12 +423,7 @@ def admin_partnerships_create():
 @app.route("/admin/partnerships/edit/<int:plan_id>", methods=["GET", "POST"])
 @admin_required
 def admin_partnerships_edit(plan_id):
-    db = get_db()
-    plan = db.execute("SELECT * FROM partnership_plans WHERE id = ?", (plan_id,)).fetchone()
-
-    if not plan:
-        flash("Partnership plan not found.", "error")
-        return redirect(url_for("admin_partnerships"))
+    plan = PartnershipPlan.query.get_or_404(plan_id)
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
@@ -472,11 +435,11 @@ def admin_partnerships_edit(plan_id):
             flash("Plan name is required.", "error")
             return redirect(url_for("admin_partnerships_edit", plan_id=plan_id))
 
-        db.execute(
-            "UPDATE partnership_plans SET name = ?, description = ?, price = ?, benefits = ? WHERE id = ?",
-            (name, description, price, benefits, plan_id),
-        )
-        db.commit()
+        plan.name = name
+        plan.description = description
+        plan.price = price
+        plan.benefits = benefits
+        db.session.commit()
         flash("Partnership plan updated successfully.", "success")
         return redirect(url_for("admin_partnerships"))
 
@@ -486,24 +449,16 @@ def admin_partnerships_edit(plan_id):
 @app.route("/admin/partnerships/delete/<int:plan_id>", methods=["POST"])
 @admin_required
 def admin_partnerships_delete(plan_id):
-    db = get_db()
-    db.execute("DELETE FROM partnership_plans WHERE id = ?", (plan_id,))
-    db.commit()
+    plan = PartnershipPlan.query.get_or_404(plan_id)
+    db.session.delete(plan)
+    db.session.commit()
     flash("Partnership plan deleted successfully.", "success")
     return redirect(url_for("admin_partnerships"))
 
 
-# Initialize database on first request
-@app.before_request
-def before_request():
-    """Initialize database if not already done"""
-    if not hasattr(app, '_db_initialized'):
-        try:
-            with app.app_context():
-                init_db()
-            app._db_initialized = True
-        except Exception as e:
-            print(f"Database initialization error: {e}")
+# Initialize database on startup
+with app.app_context():
+    init_db()
 
 
 if __name__ == "__main__":
