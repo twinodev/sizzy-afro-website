@@ -32,6 +32,7 @@
       <thead>
         <tr class="border-b border-white/15 text-afro-200">
           <th class="py-3 pr-4">Name</th>
+          <th class="py-3 pr-4">Logo</th>
           <th class="py-3 pr-4">Tier</th>
           <th class="py-3 pr-4">Website</th>
           <th class="py-3">Actions</th>
@@ -41,6 +42,15 @@
         {% for sponsor in sponsors %}
           <tr class="border-b border-white/10 align-top">
             <td class="py-3 pr-4 font-semibold text-afro-100">{{ sponsor.name }}</td>
+            <td class="py-3 pr-4">
+              {% if sponsor.logo_url %}
+                <a href="{{ sponsor.logo_url }}" target="_blank" rel="noreferrer" class="inline-block">
+                  <img src="{{ sponsor.logo_url }}" alt="{{ sponsor.name }} logo" class="w-20 h-20 object-contain rounded-lg border border-white/10 bg-white/5 p-2" />
+                </a>
+              {% else %}
+                <span class="text-afro-100/60 text-xs">No logo</span>
+              {% endif %}
+            </td>
             <td class="py-3 pr-4 text-afro-100/80">{{ sponsor.tier or '-' }}</td>
             <td class="py-3 pr-4 text-afro-100/90">
               {% if sponsor.website %}
@@ -60,7 +70,7 @@
           </tr>
         {% else %}
           <tr>
-            <td colspan="4" class="py-6 text-center text-afro-100/80">No sponsors yet.</td>
+            <td colspan="5" class="py-6 text-center text-afro-100/80">No sponsors yet.</td>
           </tr>
         {% endfor %}
       </tbody>

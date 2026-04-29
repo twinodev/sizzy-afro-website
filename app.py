@@ -39,7 +39,8 @@ app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@gmail.com")
 app.config["MAIL_SUPPRESS_SEND"] = True  # Disable actual sending during development
 app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
 app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-app.config["SUPABASE_STORAGE_BUCKET"] = os.getenv("SUPABASE_STORAGE_BUCKET", "event-flyers")
+app.config["SUPABASE_FLYER_BUCKET"] = os.getenv("SUPABASE_FLYER_BUCKET", "event-flyers")
+app.config["SUPABASE_LOGO_BUCKET"] = os.getenv("SUPABASE_LOGO_BUCKET", "sponsor-logos")
 
 # Initialize mail lazily
 mail = None
@@ -117,26 +118,26 @@ def _allowed_image_filename(filename):
     return extension in allowed_extensions
 
 
-def _upload_flyer_to_supabase(file_storage):
+def _upload_image_to_supabase(file_storage, bucket_name, object_prefix, error_label):
     """Upload an image to Supabase Storage and return its public URL."""
     if not file_storage or not file_storage.filename:
-        raise ValueError("Please choose a flyer image to upload.")
+        raise ValueError(f"Please choose a {error_label} image to upload.")
 
     if not app.config["SUPABASE_URL"] or not app.config["SUPABASE_SERVICE_ROLE_KEY"]:
         raise ValueError("Supabase storage is not configured.")
 
     if not _allowed_image_filename(file_storage.filename):
-        raise ValueError("Flyer image must be a JPG, PNG, WEBP, or GIF file.")
+        raise ValueError(f"{error_label.capitalize()} image must be a JPG, PNG, WEBP, or GIF file.")
 
     original_extension = os.path.splitext(file_storage.filename)[1].lower()
     mime_type = file_storage.mimetype or mimetypes.guess_type(file_storage.filename)[0] or "application/octet-stream"
     if not mime_type.startswith("image/"):
-        raise ValueError("Flyer image must be an image file.")
+        raise ValueError(f"{error_label.capitalize()} image must be an image file.")
 
-    object_name = f"events/{uuid.uuid4().hex}{original_extension or '.jpg'}"
+    object_name = f"{object_prefix}/{uuid.uuid4().hex}{original_extension or '.jpg'}"
     upload_url = (
         f"{app.config['SUPABASE_URL'].rstrip('/')}"
-        f"/storage/v1/object/{app.config['SUPABASE_STORAGE_BUCKET']}/{quote(object_name, safe='/')}"
+        f"/storage/v1/object/{bucket_name}/{quote(object_name, safe='/')}"
     )
 
     payload = file_storage.read()
@@ -156,14 +157,22 @@ def _upload_flyer_to_supabase(file_storage):
         with urlopen(request_obj, timeout=30) as response:
             response.read()
     except HTTPError as error:
-        raise ValueError(f"Flyer upload failed with status {error.code}.") from error
+        raise ValueError(f"{error_label.capitalize()} upload failed with status {error.code}.") from error
     except URLError as error:
-        raise ValueError("Flyer upload failed. Please try again.") from error
+        raise ValueError(f"{error_label.capitalize()} upload failed. Please try again.") from error
 
     return (
         f"{app.config['SUPABASE_URL'].rstrip('/')}"
-        f"/storage/v1/object/public/{app.config['SUPABASE_STORAGE_BUCKET']}/{quote(object_name, safe='/')}"
+        f"/storage/v1/object/public/{bucket_name}/{quote(object_name, safe='/')}"
     )
+
+
+def _upload_flyer_to_supabase(file_storage):
+    return _upload_image_to_supabase(file_storage, app.config["SUPABASE_FLYER_BUCKET"], "events", "flyer")
+
+
+def _upload_logo_to_supabase(file_storage):
+    return _upload_image_to_supabase(file_storage, app.config["SUPABASE_LOGO_BUCKET"], "sponsors", "logo")
 
 
 def admin_required(view_func):
@@ -424,12 +433,18 @@ def admin_sponsors():
 def admin_sponsors_create():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
-        logo_url = request.form.get("logo_url", "").strip()
         website = request.form.get("website", "").strip()
         tier = request.form.get("tier", "").strip()
+        logo_file = request.files.get("logo_file")
 
-        if not name:
-            flash("Sponsor name is required.", "error")
+        if not name or not logo_file or not logo_file.filename:
+            flash("Sponsor name and logo image are required.", "error")
+            return redirect(url_for("admin_sponsors_create"))
+
+        try:
+            logo_url = _upload_logo_to_supabase(logo_file)
+        except ValueError as error:
+            flash(str(error), "error")
             return redirect(url_for("admin_sponsors_create"))
 
         sponsor = Sponsor(
@@ -454,13 +469,21 @@ def admin_sponsors_edit(sponsor_id):
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
-        logo_url = request.form.get("logo_url", "").strip()
         website = request.form.get("website", "").strip()
         tier = request.form.get("tier", "").strip()
+        logo_file = request.files.get("logo_file")
 
         if not name:
             flash("Sponsor name is required.", "error")
             return redirect(url_for("admin_sponsors_edit", sponsor_id=sponsor_id))
+
+        logo_url = sponsor.logo_url
+        if logo_file and logo_file.filename:
+            try:
+                logo_url = _upload_logo_to_supabase(logo_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_sponsors_edit", sponsor_id=sponsor_id))
 
         sponsor.name = name
         sponsor.logo_url = logo_url
