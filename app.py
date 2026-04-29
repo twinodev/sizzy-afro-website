@@ -1,6 +1,11 @@
 import os
+import mimetypes
+import uuid
 from datetime import datetime
 from functools import wraps
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -32,6 +37,9 @@ app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
 app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@gmail.com")
 app.config["MAIL_SUPPRESS_SEND"] = True  # Disable actual sending during development
+app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
+app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+app.config["SUPABASE_STORAGE_BUCKET"] = os.getenv("SUPABASE_STORAGE_BUCKET", "event-flyers")
 
 # Initialize mail lazily
 mail = None
@@ -101,6 +109,61 @@ def _ensure_event_flyer_column():
     if "flyer_url" not in columns:
         db.session.execute(text("ALTER TABLE events ADD COLUMN flyer_url TEXT"))
         db.session.commit()
+
+
+def _allowed_image_filename(filename):
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+    _, extension = os.path.splitext(filename.lower())
+    return extension in allowed_extensions
+
+
+def _upload_flyer_to_supabase(file_storage):
+    """Upload an image to Supabase Storage and return its public URL."""
+    if not file_storage or not file_storage.filename:
+        raise ValueError("Please choose a flyer image to upload.")
+
+    if not app.config["SUPABASE_URL"] or not app.config["SUPABASE_SERVICE_ROLE_KEY"]:
+        raise ValueError("Supabase storage is not configured.")
+
+    if not _allowed_image_filename(file_storage.filename):
+        raise ValueError("Flyer image must be a JPG, PNG, WEBP, or GIF file.")
+
+    original_extension = os.path.splitext(file_storage.filename)[1].lower()
+    mime_type = file_storage.mimetype or mimetypes.guess_type(file_storage.filename)[0] or "application/octet-stream"
+    if not mime_type.startswith("image/"):
+        raise ValueError("Flyer image must be an image file.")
+
+    object_name = f"events/{uuid.uuid4().hex}{original_extension or '.jpg'}"
+    upload_url = (
+        f"{app.config['SUPABASE_URL'].rstrip('/')}"
+        f"/storage/v1/object/{app.config['SUPABASE_STORAGE_BUCKET']}/{quote(object_name, safe='/')}"
+    )
+
+    payload = file_storage.read()
+    request_obj = Request(
+        upload_url,
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {app.config['SUPABASE_SERVICE_ROLE_KEY']}",
+            "apikey": app.config["SUPABASE_SERVICE_ROLE_KEY"],
+            "Content-Type": mime_type,
+            "x-upsert": "true",
+        },
+    )
+
+    try:
+        with urlopen(request_obj, timeout=30) as response:
+            response.read()
+    except HTTPError as error:
+        raise ValueError(f"Flyer upload failed with status {error.code}.") from error
+    except URLError as error:
+        raise ValueError("Flyer upload failed. Please try again.") from error
+
+    return (
+        f"{app.config['SUPABASE_URL'].rstrip('/')}"
+        f"/storage/v1/object/public/{app.config['SUPABASE_STORAGE_BUCKET']}/{quote(object_name, safe='/')}"
+    )
 
 
 def admin_required(view_func):
@@ -272,12 +335,18 @@ def admin_events_create():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         description = request.form.get("description", "").strip()
-        flyer_url = request.form.get("flyer_url", "").strip()
         event_date = request.form.get("event_date", "").strip()
         location = request.form.get("location", "").strip()
+        flyer_file = request.files.get("flyer_file")
 
-        if not title or not flyer_url or not event_date:
+        if not title or not event_date or not flyer_file or not flyer_file.filename:
             flash("Title, flyer image, and event date are required.", "error")
+            return redirect(url_for("admin_events_create"))
+
+        try:
+            flyer_url = _upload_flyer_to_supabase(flyer_file)
+        except ValueError as error:
+            flash(str(error), "error")
             return redirect(url_for("admin_events_create"))
 
         event = Event(
@@ -304,13 +373,21 @@ def admin_events_edit(event_id):
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         description = request.form.get("description", "").strip()
-        flyer_url = request.form.get("flyer_url", "").strip()
         event_date = request.form.get("event_date", "").strip()
         location = request.form.get("location", "").strip()
+        flyer_file = request.files.get("flyer_file")
 
-        if not title or not flyer_url or not event_date:
-            flash("Title, flyer image, and event date are required.", "error")
+        if not title or not event_date:
+            flash("Title and event date are required.", "error")
             return redirect(url_for("admin_events_edit", event_id=event_id))
+
+        flyer_url = event.flyer_url
+        if flyer_file and flyer_file.filename:
+            try:
+                flyer_url = _upload_flyer_to_supabase(flyer_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_events_edit", event_id=event_id))
 
         event.title = title
         event.description = description
