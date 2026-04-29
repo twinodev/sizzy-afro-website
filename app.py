@@ -1,10 +1,11 @@
 import os
+import re
 import mimetypes
 import uuid
 from datetime import datetime
 from functools import wraps
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
@@ -14,13 +15,66 @@ from sqlalchemy import inspect, text
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
 
+
+def _clean_database_url(raw_value):
+    if not raw_value:
+        return ""
+
+    value = raw_value.strip().strip('"').strip("'")
+
+    # Keep only the first URL token if extra text was pasted into the env value.
+    match = re.search(r"postgres(?:ql)?://[^\s'\"]+", value)
+    if match:
+        value = match.group(0)
+
+    # Handle accidental copy/paste like: DATABASE_URL=postgresql://...
+    for prefix in ("DATABASE_URL=", "POSTGRES_URL=", "POSTGRES_URL_NON_POOLING="):
+        if value.upper().startswith(prefix):
+            value = value.split("=", 1)[1].strip().strip('"').strip("'")
+            break
+
+    if value.startswith("postgres://"):
+        value = value.replace("postgres://", "postgresql://", 1)
+
+    if value.startswith("postgresql://") and "+" not in value.split("://", 1)[0]:
+        value = value.replace("postgresql://", "postgresql+psycopg://", 1)
+
+    parsed = urlparse(value)
+    if parsed.scheme.startswith("postgresql") and parsed.query:
+        allowed_keys = {
+            "sslmode",
+            "connect_timeout",
+            "application_name",
+            "target_session_attrs",
+            "options",
+            "keepalives",
+            "keepalives_idle",
+            "keepalives_interval",
+            "keepalives_count",
+            "channel_binding",
+            "gssencmode",
+            "sslrootcert",
+            "sslcert",
+            "sslkey",
+            "passfile",
+        }
+        filtered_query = urlencode(
+            [(k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True) if k in allowed_keys],
+            doseq=True,
+        )
+        value = urlunparse(parsed._replace(query=filtered_query))
+
+    return value
+
+
 # PostgreSQL Configuration
 # Check for both DATABASE_URL (standard) and POSTGRES_URL (Supabase)
-database_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL", "postgresql://user:password@localhost/dbname")
-if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-if database_url.startswith("postgresql://") and "+" not in database_url.split("://", 1)[0]:
-    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+database_url = _clean_database_url(
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("POSTGRES_URL_NON_POOLING")
+    or "postgresql://user:password@localhost/dbname"
+)
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
