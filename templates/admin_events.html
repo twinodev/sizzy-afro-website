@@ -32,6 +32,7 @@
       <thead>
         <tr class="border-b border-white/15 text-afro-200">
           <th class="py-3 pr-4">Title</th>
+          <th class="py-3 pr-4">Flyer</th>
           <th class="py-3 pr-4">Date</th>
           <th class="py-3 pr-4">Location</th>
           <th class="py-3">Actions</th>
@@ -41,6 +42,15 @@
         {% for event in events %}
           <tr class="border-b border-white/10 align-top">
             <td class="py-3 pr-4 font-semibold text-afro-100">{{ event.title }}</td>
+            <td class="py-3 pr-4">
+              {% if event.flyer_url %}
+                <a href="{{ event.flyer_url }}" target="_blank" rel="noreferrer" class="inline-block">
+                  <img src="{{ event.flyer_url }}" alt="{{ event.title }} flyer" class="w-20 h-28 object-cover rounded-lg border border-white/10" />
+                </a>
+              {% else %}
+                <span class="text-afro-100/60 text-xs">No flyer</span>
+              {% endif %}
+            </td>
             <td class="py-3 pr-4 text-afro-100/80">{{ event.event_date }}</td>
             <td class="py-3 pr-4 text-afro-100/90">{{ event.location or '-' }}</td>
             <td class="py-3">
@@ -54,7 +64,7 @@
           </tr>
         {% else %}
           <tr>
-            <td colspan="4" class="py-6 text-center text-afro-100/80">No events yet.</td>
+            <td colspan="5" class="py-6 text-center text-afro-100/80">No events yet.</td>
           </tr>
         {% endfor %}
       </tbody>

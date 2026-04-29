@@ -28,6 +28,11 @@
     </div>
 
     <div>
+      <label for="flyer_url" class="block text-sm mb-2 text-afro-100">Flyer Image URL *</label>
+      <input id="flyer_url" name="flyer_url" type="url" class="field-input" value="{{ event.flyer_url if event else '' }}" placeholder="https://..." required />
+    </div>
+
+    <div>
       <label for="event_date" class="block text-sm mb-2 text-afro-100">Event Date *</label>
       <input id="event_date" name="event_date" type="date" class="field-input" value="{{ event.event_date if event else '' }}" required />
     </div>

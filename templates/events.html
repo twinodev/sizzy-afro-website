@@ -11,6 +11,9 @@
   <div class="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for event in events %}
       <article class="card">
+        {% if event.flyer_url %}
+          <img src="{{ event.flyer_url }}" alt="{{ event.title }} flyer" class="w-full h-56 object-cover rounded-xl mb-4 border border-white/10" />
+        {% endif %}
         <p class="text-xs text-afro-200 font-semibold">{{ event.event_date }}</p>
         <h2 class="text-xl font-bold text-afro-200 mt-2">{{ event.title }}</h2>
         <p class="mt-3 text-afro-100/90">{{ event.description or 'Join us for an amazing experience!' }}</p>

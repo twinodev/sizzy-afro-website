@@ -4,6 +4,7 @@ from functools import wraps
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect, text
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
@@ -59,6 +60,7 @@ class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
+    flyer_url = db.Column(db.Text, nullable=False)
     event_date = db.Column(db.String(50), nullable=False)
     location = db.Column(db.String(255))
     created_at = db.Column(db.String(50), nullable=False)
@@ -88,6 +90,17 @@ def init_db():
     """Initialize database tables"""
     with app.app_context():
         db.create_all()
+        _ensure_event_flyer_column()
+
+
+def _ensure_event_flyer_column():
+    """Add flyer_url to existing events tables if needed."""
+    inspector = inspect(db.engine)
+    columns = {column["name"] for column in inspector.get_columns("events")}
+
+    if "flyer_url" not in columns:
+        db.session.execute(text("ALTER TABLE events ADD COLUMN flyer_url TEXT"))
+        db.session.commit()
 
 
 def admin_required(view_func):
@@ -259,16 +272,18 @@ def admin_events_create():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         description = request.form.get("description", "").strip()
+        flyer_url = request.form.get("flyer_url", "").strip()
         event_date = request.form.get("event_date", "").strip()
         location = request.form.get("location", "").strip()
 
-        if not title or not event_date:
-            flash("Title and event date are required.", "error")
+        if not title or not flyer_url or not event_date:
+            flash("Title, flyer image, and event date are required.", "error")
             return redirect(url_for("admin_events_create"))
 
         event = Event(
             title=title,
             description=description,
+            flyer_url=flyer_url,
             event_date=event_date,
             location=location,
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -289,15 +304,17 @@ def admin_events_edit(event_id):
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         description = request.form.get("description", "").strip()
+        flyer_url = request.form.get("flyer_url", "").strip()
         event_date = request.form.get("event_date", "").strip()
         location = request.form.get("location", "").strip()
 
-        if not title or not event_date:
-            flash("Title and event date are required.", "error")
+        if not title or not flyer_url or not event_date:
+            flash("Title, flyer image, and event date are required.", "error")
             return redirect(url_for("admin_events_edit", event_id=event_id))
 
         event.title = title
         event.description = description
+        event.flyer_url = flyer_url
         event.event_date = event_date
         event.location = location
         db.session.commit()
