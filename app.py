@@ -279,7 +279,9 @@ def send_notification_email(subject, body):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    # Show latest published posts on home page
+    recent_posts = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).limit(3).all()
+    return render_template("index.html", recent_posts=recent_posts)
 
 
 @app.route("/about")
