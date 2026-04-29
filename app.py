@@ -19,6 +19,8 @@ app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
 database_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL", "postgresql://user:password@localhost/dbname")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url.startswith("postgresql://") and "+" not in database_url.split("://", 1)[0]:
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
