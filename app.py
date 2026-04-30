@@ -437,28 +437,52 @@ def send_email_message(subject, body, recipients, return_error=False):
             return False
 
         # Validate required settings
-        required_settings = {
-            "MAIL_SERVER": app.config.get("MAIL_SERVER"),
-            "MAIL_USERNAME": app.config.get("MAIL_USERNAME"),
-            "MAIL_PASSWORD": app.config.get("MAIL_PASSWORD"),
-        }
+        mail_username = app.config.get("MAIL_USERNAME")
+        mail_password = app.config.get("MAIL_PASSWORD")
+        mail_server = app.config.get("MAIL_SERVER")
         
-        missing = [k for k, v in required_settings.items() if not v]
-        if missing or not recipients:
-            error_msg = f"Mail send failed: Missing SMTP settings: {', '.join(missing)}" if missing else "Mail send failed: No recipients provided."
+        if not mail_username:
+            error_msg = "Mail send failed: MAIL_USERNAME environment variable is not set. Please configure email credentials."
+            app.logger.error(error_msg)
+            if return_error:
+                return False, error_msg
+            return False
+            
+        if not mail_password:
+            error_msg = "Mail send failed: MAIL_PASSWORD environment variable is not set. Please configure email credentials."
+            app.logger.error(error_msg)
+            if return_error:
+                return False, error_msg
+            return False
+            
+        if not mail_server:
+            error_msg = "Mail send failed: MAIL_SERVER environment variable is not set."
+            app.logger.error(error_msg)
+            if return_error:
+                return False, error_msg
+            return False
+            
+        if not recipients:
+            error_msg = "Mail send failed: No recipients provided."
             app.logger.error(error_msg)
             if return_error:
                 return False, error_msg
             return False
 
         from flask_mail import Message
+        
+        # Ensure recipients is a list
+        if isinstance(recipients, str):
+            recipients = [recipients]
+        
         msg = Message(
             subject=subject,
-            recipients=recipients if isinstance(recipients, list) else [recipients],
-            body=body
+            recipients=recipients,
+            body=body,
+            sender=app.config.get("MAIL_DEFAULT_SENDER") or mail_username
         )
         mail_instance = get_mail()
-        app.logger.info(f"Attempting to send email to {recipients} via {app.config.get('MAIL_SERVER')}:{app.config.get('MAIL_PORT')}")
+        app.logger.info(f"Attempting to send email to {recipients} via {mail_server}:{app.config.get('MAIL_PORT')}")
         mail_instance.send(msg)
         success_msg = f"Email sent successfully to {recipients}"
         app.logger.info(success_msg)
@@ -466,7 +490,7 @@ def send_email_message(subject, body, recipients, return_error=False):
             return True, success_msg
         return True
     except Exception as e:
-        error_msg = f"Email send failed: {str(e)}"
+        error_msg = f"Email send failed: {type(e).__name__}: {str(e) if str(e) else 'No error details'}"
         app.logger.exception("Email notification failed: %s", e)
         if return_error:
             return False, error_msg
