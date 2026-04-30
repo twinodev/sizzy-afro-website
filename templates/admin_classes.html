@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Classes - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-4xl font-black text-afro-200">Class Schedule</h1>
+    <a href="{{ url_for('admin_classes_create') }}" class="px-6 py-3 bg-afro-500 hover:bg-afro-600 text-white font-semibold rounded-lg transition-colors">+ Add Class</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="mb-6 p-4 rounded-lg bg-{% if category == 'error' %}red{% else %}green{% endif %}-500/20 border border-{% if category == 'error' %}red{% else %}green{% endif %}-500/30 text-white">
+        {{ message }}
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-white/10">
+        <tr>
+          <th class="px-4 py-3 font-semibold text-afro-200">Day</th>
+          <th class="px-4 py-3 font-semibold text-afro-200">Time</th>
+          <th class="px-4 py-3 font-semibold text-afro-200">Class</th>
+          <th class="px-4 py-3 font-semibold text-afro-200">Level</th>
+          <th class="px-4 py-3 font-semibold text-afro-200">Location</th>
+          <th class="px-4 py-3 font-semibold text-afro-200">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/10">
+        {% for schedule in schedules %}
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-4 py-3 font-semibold text-afro-200">{{ schedule.day_of_week }}</td>
+          <td class="px-4 py-3">{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+          <td class="px-4 py-3">{{ schedule.class_name }}</td>
+          <td class="px-4 py-3 text-afro-100/60">{{ schedule.level or '-' }}</td>
+          <td class="px-4 py-3 text-afro-100/60">{{ schedule.location or '-' }}</td>
+          <td class="px-4 py-3 flex gap-2">
+            <a href="{{ url_for('admin_classes_edit', schedule_id=schedule.id) }}" class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-semibold transition-colors">Edit</a>
+            <form method="POST" action="{{ url_for('admin_classes_delete', schedule_id=schedule.id) }}" class="inline" onsubmit="return confirm('Delete this?')">
+              <button type="submit" class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded text-xs font-semibold transition-colors text-red-200">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if not schedules %}
+  <div class="text-center py-12 text-afro-100/60">
+    No classes scheduled yet. <a href="{{ url_for('admin_classes_create') }}" class="text-afro-400 hover:text-afro-300 underline">Add one now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

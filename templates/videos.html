@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Videos - Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<script>
+  if (window.trackEvent) {
+    trackEvent('page_view', {page: 'videos'});
+  }
+</script>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="mb-12">
+    <h1 class="text-4xl sm:text-5xl font-black mb-4 text-afro-200">Video Gallery</h1>
+    <p class="text-lg text-afro-100/70">Tutorials, performances, and behind-the-scenes content</p>
+  </div>
+
+  {% if featured %}
+  <div class="mb-12">
+    <h2 class="text-2xl font-bold mb-6 text-afro-100">Featured</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {% for video in featured %}
+      <a href="https://youtube.com/watch?v={{ video.youtube_id }}" target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-lg h-40 bg-black">
+        <img src="https://img.youtube.com/vi/{{ video.youtube_id }}/maxresdefault.jpg" alt="{{ video.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
+          <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if categories %}
+  <div class="mb-8 flex flex-wrap gap-2">
+    <a href="{{ url_for('videos') }}" class="px-4 py-2 rounded-full text-sm font-semibold transition-colors {% if not current_category %}bg-afro-500 text-white{% else %}bg-white/10 text-afro-100 hover:bg-white/20{% endif %}">All</a>
+    {% for cat in categories %}
+    {% if cat[0] %}
+    <a href="{{ url_for('videos', category=cat[0]) }}" class="px-4 py-2 rounded-full text-sm font-semibold transition-colors {% if current_category == cat[0] %}bg-afro-500 text-white{% else %}bg-white/10 text-afro-100 hover:bg-white/20{% endif %}">{{ cat[0] }}</a>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    {% for video in videos.items %}
+    <a href="https://youtube.com/watch?v={{ video.youtube_id }}" target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-lg h-48 bg-black">
+      <img src="https://img.youtube.com/vi/{{ video.youtube_id }}/maxresdefault.jpg" alt="{{ video.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+      <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
+        <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+        <p class="text-white text-sm font-semibold">{{ video.title }}</p>
+        {% if video.category %}<span class="text-xs text-afro-200">{{ video.category }}</span>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if videos.pages > 1 %}
+  <div class="flex justify-center gap-2 mt-8">
+    {% if videos.has_prev %}
+    <a href="{{ url_for('videos', page=videos.prev_num, category=current_category) }}" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">← Previous</a>
+    {% endif %}
+    
+    {% for page_num in videos.iter_pages() %}
+      {% if page_num %}
+      <a href="{{ url_for('videos', page=page_num, category=current_category) }}" class="px-4 py-2 rounded-lg {% if page_num == videos.page %}bg-afro-500{% else %}bg-white/10 hover:bg-white/20{% endif %} transition-colors">{{ page_num }}</a>
+      {% endif %}
+    {% endfor %}
+    
+    {% if videos.has_next %}
+    <a href="{{ url_for('videos', page=videos.next_num, category=current_category) }}" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if not videos.items %}
+  <div class="text-center py-12">
+    <p class="text-afro-100/60">No videos yet. Check back soon!</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

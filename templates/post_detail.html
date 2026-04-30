@@ -11,6 +11,15 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+  <script>
+    // Track post view
+    if (window.trackEvent) {
+      trackEvent('post_view', {
+        post_id: {{ post.id }},
+        title: '{{ post.title }}'
+      });
+    }
+  </script>
   <article>
     <!-- Article Header -->
     <div class="mb-8">
@@ -36,6 +45,7 @@
         <img 
           src="{{ post.image_url }}" 
           alt="{{ post.title }}" 
+          loading="lazy"
           class="w-full h-auto object-cover max-h-96"
         />
       </div>
@@ -61,6 +71,7 @@
         <div class="flex gap-3">
           <a 
             href="https://twitter.com/intent/tweet?text={{ post.title }}&url={{ request.url }}" 
+            onclick="trackEvent('social_share', {platform: 'twitter', post_id: {{ post.id }}})"
             target="_blank" 
             rel="noopener noreferrer"
             class="social-link text-xs"
@@ -69,6 +80,7 @@
           </a>
           <a 
             href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" 
+            onclick="trackEvent('social_share', {platform: 'facebook', post_id: {{ post.id }}})"
             target="_blank" 
             rel="noopener noreferrer"
             class="social-link text-xs"
@@ -77,6 +89,7 @@
           </a>
           <a 
             href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url }}" 
+            onclick="trackEvent('social_share', {platform: 'linkedin', post_id: {{ post.id }}})"
             target="_blank" 
             rel="noopener noreferrer"
             class="social-link text-xs"

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="mb-12">
+    <h1 class="text-4xl sm:text-5xl font-black mb-4 text-afro-200">Search</h1>
+    
+    <form method="GET" class="flex gap-2 mt-6">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search posts, events, and more..." class="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-afro-500">
+      <button type="submit" class="px-6 py-3 bg-afro-500 hover:bg-afro-600 text-white font-semibold rounded-lg transition-colors">Search</button>
+    </form>
+  </div>
+
+  {% if query %}
+    {% set total_results = results.posts|length + results.events|length + results.gallery|length %}
+    
+    {% if total_results > 0 %}
+    <p class="text-afro-100/70 mb-8">Found {{ total_results }} result{{ 's' if total_results != 1 else '' }}</p>
+    
+    {% if results.posts %}
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold text-afro-200 mb-6">Posts</h2>
+      <div class="space-y-4">
+        {% for post in results.posts %}
+        <a href="{{ url_for('post_detail', post_id=post.id) }}" class="card-soft group hover:border-afro-500/50 transition-colors">
+          <div class="flex gap-4">
+            {% if post.image_url %}
+            <img src="{{ post.image_url }}" alt="{{ post.title }}" class="w-20 h-20 rounded-lg object-cover flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+            {% endif %}
+            <div class="flex-1">
+              <h3 class="font-semibold text-afro-200 group-hover:text-afro-400 transition-colors">{{ post.title }}</h3>
+              <p class="text-sm text-afro-100/60 mt-1">{{ post.excerpt or post.content[:100] }}...</p>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if results.events %}
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold text-afro-200 mb-6">Events</h2>
+      <div class="space-y-4">
+        {% for event in results.events %}
+        <a href="{{ url_for('event_calendar') }}" class="card-soft group hover:border-afro-500/50 transition-colors">
+          <h3 class="font-semibold text-afro-200 group-hover:text-afro-400 transition-colors">{{ event.title }}</h3>
+          <p class="text-sm text-afro-100/60 mt-1">📅 {{ event.event_date }}</p>
+          {% if event.location %}<p class="text-sm text-afro-100/60">📍 {{ event.location }}</p>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if results.gallery %}
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold text-afro-200 mb-6">Gallery</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in results.gallery %}
+        <a href="{{ url_for('gallery') }}" class="group relative overflow-hidden rounded-lg h-48">
+          <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+          <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+            <p class="text-white text-sm font-semibold">{{ item.title }}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-12">
+      <p class="text-afro-100/60">No results found for "{{ query }}"</p>
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-12">
+      <p class="text-afro-100/60">Enter a search term above</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

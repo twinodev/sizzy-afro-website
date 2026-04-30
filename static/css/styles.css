@@ -300,3 +300,181 @@ link[rel="icon"] {
   transform: translateY(-2px);
   filter: brightness(1.04);
 }
+
+/* Light Mode Styles */
+html.light-mode {
+  color-scheme: light;
+}
+
+html.light-mode body {
+  background: #f8f5f0;
+  color: #1a1a1a;
+}
+
+html.light-mode .site-aura {
+  background:
+    radial-gradient(40rem 40rem at 10% -10%, rgba(255, 159, 60, 0.08), transparent 60%),
+    radial-gradient(42rem 42rem at 100% 0%, rgba(79, 70, 229, 0.08), transparent 60%),
+    linear-gradient(170deg, #f8f5f0 0%, #faf8f3 45%, #fdf9f2 100%);
+}
+
+html.light-mode .nav-shell {
+  backdrop-filter: blur(12px);
+  background: rgba(248, 245, 240, 0.85);
+  border-bottom: 1px solid rgba(255, 159, 60, 0.15);
+}
+
+html.light-mode .nav-link {
+  color: rgba(139, 95, 43, 0.9);
+}
+
+html.light-mode .nav-link:hover {
+  background: rgba(255, 159, 60, 0.15);
+  color: #6b3d1f;
+}
+
+html.light-mode .active-link {
+  background: linear-gradient(135deg, rgba(255, 159, 60, 0.18), rgba(255, 95, 46, 0.15));
+  color: #6b3d1f;
+}
+
+html.light-mode .mobile-nav-link {
+  color: rgba(139, 95, 43, 0.9);
+}
+
+html.light-mode .mobile-nav-link:hover {
+  background: rgba(255, 159, 60, 0.15);
+  color: #6b3d1f;
+}
+
+html.light-mode .mobile-nav-link.active-link {
+  background: linear-gradient(135deg, rgba(255, 159, 60, 0.18), rgba(255, 95, 46, 0.15));
+  color: #6b3d1f;
+}
+
+html.light-mode .section-title {
+  color: #1a1a1a;
+}
+
+html.light-mode .eyebrow {
+  color: rgba(139, 95, 43, 0.95);
+}
+
+html.light-mode .card,
+html.light-mode .card-soft,
+html.light-mode .card-hero {
+  border: 1px solid rgba(255, 159, 60, 0.2);
+  background: linear-gradient(180deg, rgba(255, 248, 232, 0.3), rgba(255, 248, 232, 0.1));
+  color: #1a1a1a;
+}
+
+html.light-mode .card-hero {
+  background:
+    radial-gradient(circle at top right, rgba(255, 159, 60, 0.1), transparent 42%),
+    linear-gradient(180deg, rgba(255, 248, 232, 0.3), rgba(255, 248, 232, 0.1));
+}
+
+html.light-mode .card-soft {
+  backdrop-filter: blur(5px);
+  background: rgba(255, 248, 232, 0.2);
+}
+
+html.light-mode .cta-band {
+  background:
+    radial-gradient(circle at 90% 15%, rgba(79, 70, 229, 0.1), transparent 33%),
+    linear-gradient(135deg, rgba(255, 159, 60, 0.1), rgba(255, 95, 46, 0.08));
+  color: #1a1a1a;
+}
+
+html.light-mode .hero-glow::before {
+  background: radial-gradient(circle, rgba(255, 123, 47, 0.15), transparent 65%);
+}
+
+html.light-mode .field-input {
+  background: rgba(255, 248, 232, 0.5);
+  border: 1px solid rgba(255, 159, 60, 0.3);
+  color: #1a1a1a;
+}
+
+html.light-mode .field-input::placeholder {
+  color: rgba(139, 95, 43, 0.6);
+}
+
+html.light-mode .field-input:focus {
+  border-color: rgba(255, 123, 47, 0.9);
+  box-shadow: 0 0 0 3px rgba(255, 159, 60, 0.1);
+}
+
+html.light-mode .pill {
+  color: rgba(139, 95, 43, 0.95);
+  border: 1px solid rgba(255, 159, 60, 0.25);
+  background: rgba(255, 248, 232, 0.3);
+}
+
+html.light-mode .social-link {
+  color: rgba(139, 95, 43, 0.95);
+  border: 1px solid rgba(255, 159, 60, 0.25);
+  background: rgba(255, 248, 232, 0.3);
+}
+
+html.light-mode .social-link:hover {
+  background: rgba(255, 123, 47, 0.12);
+}
+
+html.light-mode .metric {
+  border: 1px solid rgba(255, 159, 60, 0.2);
+  background: rgba(255, 248, 232, 0.3);
+  color: #1a1a1a;
+}
+
+html.light-mode .metric-value {
+  color: #d97706;
+}
+
+html.light-mode .metric-label {
+  color: rgba(139, 95, 43, 0.82);
+}
+
+html.light-mode h1,
+html.light-mode h2,
+html.light-mode h3,
+html.light-mode h4,
+html.light-mode h5,
+html.light-mode h6 {
+  color: #1a1a1a;
+}
+
+html.light-mode a {
+  color: #d97706;
+}
+
+html.light-mode a:hover {
+  color: #b45309;
+}
+
+html.light-mode table {
+  border-color: rgba(255, 159, 60, 0.2);
+}
+
+html.light-mode thead {
+  background: rgba(255, 248, 232, 0.3);
+  color: #1a1a1a;
+}
+
+html.light-mode tbody tr {
+  border-color: rgba(255, 159, 60, 0.15);
+}
+
+html.light-mode tbody tr:hover {
+  background: rgba(255, 248, 232, 0.2);
+}
+
+html.light-mode .hero-grid {
+  border-bottom: 1px solid rgba(255, 159, 60, 0.15);
+}
+
+html.light-mode hr,
+html.light-mode border-t {
+  border-color: rgba(255, 159, 60, 0.15);
+}
+

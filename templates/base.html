@@ -2,9 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#12031f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Dance with Sizzy Afro" />
     <title>{% block title %}Dance with Sizzy Afro{% endblock %}</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}" />
+    <meta name="keywords" content="Afro dance, dance classes, dance performances, dance community, dance workshops, dance coaching, Sizzy Afro" />
+    <meta name="author" content="Dance with Sizzy Afro" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="7 days" />
     <meta name="description" content="Dance with Sizzy Afro — Afro dance classes, performances, and community experiences." />
     {# Open Graph / Twitter meta (defaults can be overridden by templates via meta_* variables) #}
     <meta name="description" content="{{ meta_description|default('Dance with Sizzy Afro — Afro dance classes, performances, and community experiences.')|e }}" />
@@ -74,6 +83,26 @@
       }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Analytics -->
+    {% if ga_tracking_id %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_tracking_id }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ ga_tracking_id }}', {
+        'page_path': '{{ request.path }}',
+        'page_title': document.title
+      });
+      
+      // Utility function to track custom events
+      window.trackEvent = function(eventName, eventParams) {
+        gtag('event', eventName, eventParams);
+      };
+    </script>
+    {% endif %}
+    
     <script>
       // Mark body as loaded when Tailwind is ready
       document.addEventListener('DOMContentLoaded', () => {
@@ -92,16 +121,29 @@
           <span class="sm:hidden">Sizzy Afro</span>
         </a>
         
-        <button id="mobile-menu-btn" class="lg:hidden text-afro-200 p-2" aria-label="Toggle menu">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="dark-mode-btn" class="text-afro-200 p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <svg id="sun-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-16.78 7.78l4.24-4.24m5.08-5.08l4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg id="moon-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
+          <button id="mobile-menu-btn" class="lg:hidden text-afro-200 p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Toggle menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
 
         <nav id="desktop-nav" class="hidden lg:flex items-center gap-1 sm:gap-2 text-sm sm:text-base rounded-full p-1 bg-white/5 border border-white/10">
           <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
           <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
-          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_calendar' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('classes') }}" class="nav-link {% if request.endpoint == 'classes' %}active-link{% endif %}">Classes</a>
+          <a href="{{ url_for('gallery') }}" class="nav-link {% if request.endpoint == 'gallery' %}active-link{% endif %}">Gallery</a>
           <a href="{{ url_for('posts') }}" class="nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
           <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
           <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
@@ -113,7 +155,9 @@
         <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
           <a href="{{ url_for('home') }}" class="mobile-nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
           <a href="{{ url_for('about') }}" class="mobile-nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
-          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_calendar' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('classes') }}" class="mobile-nav-link {% if request.endpoint == 'classes' %}active-link{% endif %}">Classes</a>
+          <a href="{{ url_for('gallery') }}" class="mobile-nav-link {% if request.endpoint == 'gallery' %}active-link{% endif %}">Gallery</a>
           <a href="{{ url_for('posts') }}" class="mobile-nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
           <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
           <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
@@ -194,6 +238,41 @@
     </a>
 
     <script>
+      // Dark mode toggle functionality
+      const darkModeBtn = document.getElementById('dark-mode-btn');
+      const sunIcon = document.getElementById('sun-icon');
+      const moonIcon = document.getElementById('moon-icon');
+      const html = document.documentElement;
+      
+      // Check if dark mode is enabled (default to dark mode)
+      const isDarkMode = localStorage.getItem('darkMode') !== 'false';
+      
+      function setDarkMode(enabled) {
+        if (enabled) {
+          html.classList.remove('light-mode');
+          localStorage.setItem('darkMode', 'true');
+          moonIcon.classList.add('hidden');
+          sunIcon.classList.remove('hidden');
+        } else {
+          html.classList.add('light-mode');
+          localStorage.setItem('darkMode', 'false');
+          sunIcon.classList.add('hidden');
+          moonIcon.classList.remove('hidden');
+        }
+      }
+      
+      // Initialize dark mode on page load
+      setDarkMode(isDarkMode);
+      
+      // Toggle dark mode on button click
+      if (darkModeBtn) {
+        darkModeBtn.addEventListener('click', () => {
+          const isCurrentlyDark = !html.classList.contains('light-mode');
+          setDarkMode(!isCurrentlyDark);
+        });
+      }
+      
+      // Mobile menu toggle
       const mobileMenuBtn = document.getElementById('mobile-menu-btn');
       const mobileNav = document.getElementById('mobile-nav');
       

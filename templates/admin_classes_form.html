@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{% if schedule %}Edit{% else %}Add{% endif %} Class - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <h1 class="text-4xl font-black mb-8 text-afro-200">{% if schedule %}Edit{% else %}Add{% endif %} Class</h1>
+
+  <form method="POST" class="card-soft space-y-6">
+    <div>
+      <label for="class_name" class="block text-sm font-semibold text-afro-200 mb-2">Class Name *</label>
+      <input type="text" id="class_name" name="class_name" required value="{{ schedule.class_name if schedule else '' }}" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+    </div>
+
+    <div>
+      <label for="day_of_week" class="block text-sm font-semibold text-afro-200 mb-2">Day of Week *</label>
+      <select id="day_of_week" name="day_of_week" required class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+        <option value="">Select a day...</option>
+        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+        <option value="{{ day }}" {% if schedule and schedule.day_of_week == day %}selected{% endif %}>{{ day }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="start_time" class="block text-sm font-semibold text-afro-200 mb-2">Start Time *</label>
+        <input type="time" id="start_time" name="start_time" required value="{{ schedule.start_time if schedule else '' }}" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+      </div>
+      <div>
+        <label for="end_time" class="block text-sm font-semibold text-afro-200 mb-2">End Time *</label>
+        <input type="time" id="end_time" name="end_time" required value="{{ schedule.end_time if schedule else '' }}" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+      </div>
+    </div>
+
+    <div>
+      <label for="location" class="block text-sm font-semibold text-afro-200 mb-2">Location</label>
+      <input type="text" id="location" name="location" value="{{ schedule.location if schedule else '' }}" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+    </div>
+
+    <div>
+      <label for="level" class="block text-sm font-semibold text-afro-200 mb-2">Level</label>
+      <select id="level" name="level" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+        <option value="">Select a level...</option>
+        {% for lvl in ['Beginner', 'Intermediate', 'Advanced', 'All Levels'] %}
+        <option value="{{ lvl }}" {% if schedule and schedule.level == lvl %}selected{% endif %}>{{ lvl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="capacity" class="block text-sm font-semibold text-afro-200 mb-2">Capacity</label>
+        <input type="number" id="capacity" name="capacity" value="{{ schedule.capacity if schedule else '' }}" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">
+      </div>
+    </div>
+
+    <div>
+      <label for="description" class="block text-sm font-semibold text-afro-200 mb-2">Description</label>
+      <textarea id="description" name="description" rows="4" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-afro-500">{{ schedule.description if schedule else '' }}</textarea>
+    </div>
+
+    <div class="flex gap-4">
+      <button type="submit" class="px-6 py-3 bg-afro-500 hover:bg-afro-600 text-white font-semibold rounded-lg transition-colors">Save</button>
+      <a href="{{ url_for('admin_classes') }}" class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

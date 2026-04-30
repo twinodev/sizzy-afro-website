@@ -27,8 +27,9 @@
 
   <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <article class="card">
-      <p class="text-afro-100/80 text-sm">Total submissions</p>
+      <p class="text-afro-100/80 text-sm">Contact Submissions</p>
       <p class="text-3xl font-extrabold text-afro-200 mt-2">{{ total_submissions }}</p>
+      <a href="{{ url_for('admin_submissions') }}" class="text-xs text-afro-300 hover:underline mt-1 inline-block">View</a>
     </article>
     <article class="card">
       <p class="text-afro-100/80 text-sm">Events</p>
@@ -46,10 +47,52 @@
       <a href="{{ url_for('admin_sponsors') }}" class="text-xs text-afro-300 hover:underline mt-1 inline-block">Manage</a>
     </article>
     <article class="card">
-      <p class="text-afro-100/80 text-sm">Partnership Plans</p>
+      <p class="text-afro-100/80 text-sm">Partnerships</p>
       <p class="text-3xl font-extrabold text-afro-200 mt-2">{{ total_plans }}</p>
       <a href="{{ url_for('admin_partnerships') }}" class="text-xs text-afro-300 hover:underline mt-1 inline-block">Manage</a>
     </article>
+  </div>
+
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-afro-200 mb-4">Content Management</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <a href="{{ url_for('admin_gallery') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Gallery</p>
+        <p class="text-xs text-afro-100/60 mt-1">Manage photos</p>
+      </a>
+      <a href="{{ url_for('admin_videos') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Videos</p>
+        <p class="text-xs text-afro-100/60 mt-1">Manage videos</p>
+      </a>
+      <a href="{{ url_for('admin_testimonials') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Testimonials</p>
+        <p class="text-xs text-afro-100/60 mt-1">Approve reviews</p>
+      </a>
+      <a href="{{ url_for('admin_faqs') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">FAQs</p>
+        <p class="text-xs text-afro-100/60 mt-1">Manage questions</p>
+      </a>
+      <a href="{{ url_for('admin_classes') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Classes</p>
+        <p class="text-xs text-afro-100/60 mt-1">Schedule classes</p>
+      </a>
+      <a href="{{ url_for('admin_merchandise') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Merchandise</p>
+        <p class="text-xs text-afro-100/60 mt-1">Manage products</p>
+      </a>
+      <a href="{{ url_for('admin_comments') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Comments</p>
+        <p class="text-xs text-afro-100/60 mt-1">Moderate comments</p>
+      </a>
+      <a href="{{ url_for('admin_newsletter') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Newsletter</p>
+        <p class="text-xs text-afro-100/60 mt-1">View subscribers</p>
+      </a>
+      <a href="{{ url_for('admin_social_links') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
+        <p class="font-semibold text-afro-200">Social Links</p>
+        <p class="text-xs text-afro-100/60 mt-1">Manage links</p>
+      </a>
+    </div>
   </div>
 
   <div class="card-soft overflow-x-auto">

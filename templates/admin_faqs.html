@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Manage FAQs - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-4xl font-black text-afro-200">FAQs</h1>
+    <a href="{{ url_for('admin_faqs_create') }}" class="px-6 py-3 bg-afro-500 hover:bg-afro-600 text-white font-semibold rounded-lg transition-colors">+ Add FAQ</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="mb-6 p-4 rounded-lg bg-{% if category == 'error' %}red{% else %}green{% endif %}-500/20 border border-{% if category == 'error' %}red{% else %}green{% endif %}-500/30 text-white">
+        {{ message }}
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="space-y-4">
+    {% for faq in faqs %}
+    <div class="card-soft">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="flex-1">
+          <p class="font-semibold text-afro-200">{{ faq.question }}</p>
+          <p class="text-sm text-afro-100/70 mt-2">{{ faq.answer[:100] }}...</p>
+          {% if faq.category %}<p class="text-xs text-afro-100/60 mt-2">{{ faq.category }}</p>{% endif %}
+        </div>
+        <div class="flex gap-2">
+          <a href="{{ url_for('admin_faqs_edit', faq_id=faq.id) }}" class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-semibold transition-colors">Edit</a>
+          <form method="POST" action="{{ url_for('admin_faqs_delete', faq_id=faq.id) }}" class="inline" onsubmit="return confirm('Delete this?')">
+            <button type="submit" class="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded text-xs font-semibold transition-colors text-red-200">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if not faqs %}
+  <div class="text-center py-12 text-afro-100/60">
+    No FAQs yet. <a href="{{ url_for('admin_faqs_create') }}" class="text-afro-400 hover:text-afro-300 underline">Add one now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

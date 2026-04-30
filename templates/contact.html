@@ -8,7 +8,7 @@
     <div>
       <p class="eyebrow">Connect & Booking</p>
       <h1 class="text-4xl sm:text-5xl font-extrabold mt-3">Let’s build your dance community</h1>
-      <p class="mt-4 text-afro-100/90">Use this form for bookings, class interest, collaborations, and community updates.</p>
+      <p class="mt-4 text-afro-100/90">Use this form for bookings, class interest, collaborations, and community updates. We will send a verification email before your message reaches the team.</p>
       <div class="mt-6 space-y-3 text-afro-100/90">
         <p>• Workshops & private sessions</p>
         <p>• Event choreography support</p>
@@ -29,7 +29,7 @@
         {% endif %}
       {% endwith %}
 
-      <form method="POST" class="card-soft space-y-5">
+      <form method="POST" class="card-soft space-y-5" onsubmit="trackEvent('contact_submission', {method: 'contact_form'})">
         <div>
           <label for="name" class="block text-sm mb-2 text-afro-100">Name</label>
           <input id="name" name="name" type="text" class="field-input" placeholder="Your name" required />

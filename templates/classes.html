@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Classes - Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<script>
+  if (window.trackEvent) {
+    trackEvent('page_view', {page: 'classes'});
+  }
+</script>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="mb-12">
+    <h1 class="text-4xl sm:text-5xl font-black mb-4 text-afro-200">Class Schedule</h1>
+    <p class="text-lg text-afro-100/70">Join us for dance classes</p>
+  </div>
+
+  <div class="grid gap-6">
+    {% set current_day = '' %}
+    {% for schedule in schedules %}
+      {% if schedule.day_of_week != current_day %}
+        {% if current_day != '' %}</div>{% endif %}
+        {% set current_day = schedule.day_of_week %}
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-afro-200 mb-4">{{ schedule.day_of_week }}</h2>
+          <div class="space-y-4">
+      {% endif %}
+      
+      <div class="card-soft">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold text-afro-200">{{ schedule.class_name }}</h3>
+            <p class="text-afro-100/70 mt-1">{{ schedule.start_time }} - {{ schedule.end_time }}</p>
+            {% if schedule.level %}
+            <span class="inline-block mt-2 px-3 py-1 bg-afro-500/20 border border-afro-500/30 rounded-full text-xs font-semibold text-afro-300">{{ schedule.level }}</span>
+            {% endif %}
+            {% if schedule.location %}
+            <p class="text-sm text-afro-100/60 mt-2">📍 {{ schedule.location }}</p>
+            {% endif %}
+            {% if schedule.capacity %}
+            <p class="text-sm text-afro-100/60">👥 Max {{ schedule.capacity }} students</p>
+            {% endif %}
+            {% if schedule.description %}
+            <p class="text-afro-100/70 mt-3">{{ schedule.description }}</p>
+            {% endif %}
+          </div>
+          <a href="{{ url_for('contact') }}" class="px-6 py-3 bg-afro-500 hover:bg-afro-600 text-white font-semibold rounded-lg transition-colors whitespace-nowrap">Enroll Now</a>
+        </div>
+      </div>
+    {% endfor %}
+    {% if current_day != '' %}</div>{% endif %}
+  </div>
+
+  {% if not schedules %}
+  <div class="text-center py-12">
+    <p class="text-afro-100/60">No classes scheduled yet. Check back soon!</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
