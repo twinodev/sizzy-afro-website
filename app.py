@@ -469,26 +469,29 @@ def send_email_message(subject, body, recipients, return_error=False):
                 return False, error_msg
             return False
 
-        from flask_mail import Message
-        
         # Ensure recipients is a list
         if isinstance(recipients, str):
             recipients = [recipients]
         
-        msg = Message(
-            subject=subject,
-            recipients=recipients,
-            body=body,
-            sender=app.config.get("MAIL_DEFAULT_SENDER") or mail_username
-        )
-        mail_instance = get_mail()
-        app.logger.info(f"Attempting to send email to {recipients} via {mail_server}:{app.config.get('MAIL_PORT')}")
-        mail_instance.send(msg)
-        success_msg = f"Email sent successfully to {recipients}"
-        app.logger.info(success_msg)
-        if return_error:
-            return True, success_msg
-        return True
+        # Use app context to ensure Flask-Mail operations work correctly
+        with app.app_context():
+            from flask_mail import Message
+            
+            msg = Message(
+                subject=subject,
+                recipients=recipients,
+                body=body,
+                sender=app.config.get("MAIL_DEFAULT_SENDER") or mail_username
+            )
+            mail_instance = get_mail()
+            app.logger.info(f"Attempting to send email to {recipients} via {mail_server}:{app.config.get('MAIL_PORT')}")
+            mail_instance.send(msg)
+            success_msg = f"Email sent successfully to {recipients}"
+            app.logger.info(success_msg)
+            if return_error:
+                return True, success_msg
+            return True
+            
     except Exception as e:
         error_msg = f"Email send failed: {type(e).__name__}: {str(e) if str(e) else 'No error details'}"
         app.logger.exception("Email notification failed: %s", e)
