@@ -1,7 +1,10 @@
 import os
 import re
+import smtplib
+import socket
 import mimetypes
 import uuid
+from email.message import EmailMessage
 from datetime import datetime
 from functools import wraps
 from urllib.error import HTTPError, URLError
@@ -472,28 +475,50 @@ def send_email_message(subject, body, recipients, return_error=False):
         # Ensure recipients is a list
         if isinstance(recipients, str):
             recipients = [recipients]
-        
-        # Use app context to ensure Flask-Mail operations work correctly
-        with app.app_context():
-            from flask_mail import Message
-            
-            msg = Message(
-                subject=subject,
-                recipients=recipients,
-                body=body,
-                sender=app.config.get("MAIL_DEFAULT_SENDER") or mail_username
-            )
-            mail_instance = get_mail()
-            app.logger.info(f"Attempting to send email to {recipients} via {mail_server}:{app.config.get('MAIL_PORT')}")
-            mail_instance.send(msg)
-            success_msg = f"Email sent successfully to {recipients}"
-            app.logger.info(success_msg)
-            if return_error:
-                return True, success_msg
-            return True
+
+        mail_port = int(app.config.get("MAIL_PORT", 587))
+        mail_use_tls = bool(app.config.get("MAIL_USE_TLS", True))
+        mail_timeout = int(os.getenv("MAIL_TIMEOUT", "12"))
+        sender = app.config.get("MAIL_DEFAULT_SENDER") or mail_username
+
+        message = EmailMessage()
+        message["Subject"] = subject
+        message["From"] = sender
+        message["To"] = ", ".join(recipients)
+        message.set_content(body)
+
+        app.logger.info(
+            "Attempting SMTP send to %s via %s:%s (tls=%s, timeout=%ss)",
+            recipients,
+            mail_server,
+            mail_port,
+            mail_use_tls,
+            mail_timeout,
+        )
+
+        with smtplib.SMTP(mail_server, mail_port, timeout=mail_timeout) as smtp:
+            smtp.ehlo()
+            if mail_use_tls:
+                smtp.starttls()
+                smtp.ehlo()
+            smtp.login(mail_username, mail_password)
+            smtp.send_message(message)
+
+        success_msg = f"Email sent successfully to {recipients}"
+        app.logger.info(success_msg)
+        if return_error:
+            return True, success_msg
+        return True
             
     except Exception as e:
-        error_msg = f"Email send failed: {type(e).__name__}: {str(e) if str(e) else 'No error details'}"
+        if isinstance(e, socket.timeout):
+            error_msg = "Email send failed: SMTP connection timed out. Hosting provider may be blocking outbound SMTP."
+        elif isinstance(e, smtplib.SMTPAuthenticationError):
+            error_msg = "Email send failed: SMTP authentication failed. Check MAIL_USERNAME and MAIL_PASSWORD (app password)."
+        elif isinstance(e, smtplib.SMTPConnectError):
+            error_msg = f"Email send failed: Could not connect to SMTP server ({e})."
+        else:
+            error_msg = f"Email send failed: {type(e).__name__}: {str(e) if str(e) else 'No error details'}"
         app.logger.exception("Email notification failed: %s", e)
         if return_error:
             return False, error_msg
