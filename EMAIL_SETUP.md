@@ -19,6 +19,7 @@
    MAIL_USERNAME=your-email@gmail.com
    MAIL_PASSWORD=xxxx-xxxx-xxxx-xxxx  # Your app password
    ADMIN_EMAIL=your-email@gmail.com    # Where you want notifications
+   MAIL_SUPPRESS_SEND=False            # Must be False in production
    ```
 
 4. **Test it**:
@@ -52,6 +53,7 @@ Check your hosting provider's documentation for SMTP settings.
 **Not receiving emails?**
 - Check spam/junk folder
 - Verify `.env` file is in the project root
+- Confirm `MAIL_SUPPRESS_SEND=False` in production
 - Ensure credentials are correct
 - Check Flask terminal for error messages
 

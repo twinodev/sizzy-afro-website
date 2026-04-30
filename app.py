@@ -92,7 +92,7 @@ app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
 app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@gmail.com")
-app.config["MAIL_SUPPRESS_SEND"] = True  # Disable actual sending during development
+app.config["MAIL_SUPPRESS_SEND"] = os.getenv("MAIL_SUPPRESS_SEND", "False").lower() in ("1", "true", "yes")
 app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
 app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 app.config["SUPABASE_FLYER_BUCKET"] = os.getenv("SUPABASE_FLYER_BUCKET", "event-flyers")
@@ -418,18 +418,31 @@ def admin_required(view_func):
 def send_email_message(subject, body, recipients):
     """Send a plain text email to one or more recipients."""
     try:
-        if app.config["MAIL_USERNAME"] and recipients:
-            from flask_mail import Message
-            msg = Message(
-                subject=subject,
-                recipients=recipients,
-                body=body
-            )
-            mail_instance = get_mail()
-            mail_instance.send(msg)
-            return True
+        if app.config["MAIL_SUPPRESS_SEND"]:
+            app.logger.warning("Mail send skipped because MAIL_SUPPRESS_SEND is enabled.")
+            return False
+
+        required_settings = [
+            app.config.get("MAIL_SERVER"),
+            app.config.get("MAIL_USERNAME"),
+            app.config.get("MAIL_PASSWORD"),
+            recipients,
+        ]
+        if not all(required_settings):
+            app.logger.error("Mail send skipped because SMTP settings are incomplete.")
+            return False
+
+        from flask_mail import Message
+        msg = Message(
+            subject=subject,
+            recipients=recipients,
+            body=body
+        )
+        mail_instance = get_mail()
+        mail_instance.send(msg)
+        return True
     except Exception as e:
-        print(f"Email notification failed: {e}")
+        app.logger.exception("Email notification failed: %s", e)
     return False
 
 
