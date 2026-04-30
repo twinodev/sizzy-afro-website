@@ -415,35 +415,62 @@ def admin_required(view_func):
     return wrapped
 
 
-def send_email_message(subject, body, recipients):
-    """Send a plain text email to one or more recipients."""
+def send_email_message(subject, body, recipients, return_error=False):
+    """Send a plain text email to one or more recipients.
+    
+    Args:
+        subject: Email subject line
+        body: Email body text
+        recipients: List of email addresses or single email string
+        return_error: If True, return (success, error_message) tuple; if False, return boolean
+    
+    Returns:
+        If return_error=False: True if sent successfully, False otherwise
+        If return_error=True: (success_bool, error_message_str) tuple
+    """
     try:
         if app.config["MAIL_SUPPRESS_SEND"]:
-            app.logger.warning("Mail send skipped because MAIL_SUPPRESS_SEND is enabled.")
+            error_msg = "Mail send skipped because MAIL_SUPPRESS_SEND is enabled. Set MAIL_SUPPRESS_SEND=False in environment variables."
+            app.logger.warning(error_msg)
+            if return_error:
+                return False, error_msg
             return False
 
-        required_settings = [
-            app.config.get("MAIL_SERVER"),
-            app.config.get("MAIL_USERNAME"),
-            app.config.get("MAIL_PASSWORD"),
-            recipients,
-        ]
-        if not all(required_settings):
-            app.logger.error("Mail send skipped because SMTP settings are incomplete.")
+        # Validate required settings
+        required_settings = {
+            "MAIL_SERVER": app.config.get("MAIL_SERVER"),
+            "MAIL_USERNAME": app.config.get("MAIL_USERNAME"),
+            "MAIL_PASSWORD": app.config.get("MAIL_PASSWORD"),
+        }
+        
+        missing = [k for k, v in required_settings.items() if not v]
+        if missing or not recipients:
+            error_msg = f"Mail send failed: Missing SMTP settings: {', '.join(missing)}" if missing else "Mail send failed: No recipients provided."
+            app.logger.error(error_msg)
+            if return_error:
+                return False, error_msg
             return False
 
         from flask_mail import Message
         msg = Message(
             subject=subject,
-            recipients=recipients,
+            recipients=recipients if isinstance(recipients, list) else [recipients],
             body=body
         )
         mail_instance = get_mail()
+        app.logger.info(f"Attempting to send email to {recipients} via {app.config.get('MAIL_SERVER')}:{app.config.get('MAIL_PORT')}")
         mail_instance.send(msg)
+        success_msg = f"Email sent successfully to {recipients}"
+        app.logger.info(success_msg)
+        if return_error:
+            return True, success_msg
         return True
     except Exception as e:
+        error_msg = f"Email send failed: {str(e)}"
         app.logger.exception("Email notification failed: %s", e)
-    return False
+        if return_error:
+            return False, error_msg
+    return False if not return_error else (False, "Unknown email error")
 
 
 def send_notification_email(subject, body):
@@ -618,6 +645,25 @@ def admin_dashboard():
         total_sponsors=total_sponsors,
         total_plans=total_plans,
     )
+
+
+@app.route("/admin/send-test-email", methods=["POST"])
+@admin_required
+def send_test_email():
+    """Send a test email to the admin email address to verify SMTP configuration."""
+    from flask import jsonify
+    
+    success, message = send_email_message(
+        subject="Test Email from Dance with Sizzy Afro",
+        body="This is a test email to verify your SMTP configuration is working correctly.",
+        recipients=[app.config["ADMIN_EMAIL"]],
+        return_error=True
+    )
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "message": message}), 500
 
 
 # Public routes

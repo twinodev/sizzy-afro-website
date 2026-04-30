@@ -54,6 +54,20 @@
   </div>
 
   <div class="mb-8">
+    <h2 class="text-2xl font-bold text-afro-200 mb-4">System & Settings</h2>
+    <div class="card-soft">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-semibold text-afro-200">Email Configuration</p>
+          <p class="text-xs text-afro-100/60 mt-1">Test your SMTP and email delivery settings</p>
+        </div>
+        <button id="send-test-email-btn" class="btn-primary text-sm">Send Test Email</button>
+      </div>
+      <div id="email-test-result" class="mt-4 hidden rounded-lg px-4 py-3 text-sm"></div>
+    </div>
+  </div>
+
+  <div class="mb-8">
     <h2 class="text-2xl font-bold text-afro-200 mb-4">Content Management</h2>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <a href="{{ url_for('admin_gallery') }}" class="card-soft hover:border-afro-500/50 transition-colors text-center">
@@ -124,4 +138,47 @@
     </table>
   </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const testEmailBtn = document.getElementById('send-test-email-btn');
+  const resultDiv = document.getElementById('email-test-result');
+  
+  testEmailBtn.addEventListener('click', async function() {
+    testEmailBtn.disabled = true;
+    testEmailBtn.textContent = 'Sending...';
+    resultDiv.classList.add('hidden');
+    
+    try {
+      const response = await fetch('{{ url_for("send_test_email") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      resultDiv.classList.remove('hidden');
+      if (response.ok) {
+        resultDiv.classList.add('bg-emerald-500/20', 'border', 'border-emerald-400/30', 'text-emerald-200');
+        resultDiv.classList.remove('bg-pulse/20', 'border-pulse/40', 'text-red-100');
+        resultDiv.innerHTML = `<strong>✓ Success!</strong> ${data.message}`;
+      } else {
+        resultDiv.classList.add('bg-pulse/20', 'border', 'border-pulse/40', 'text-red-100');
+        resultDiv.classList.remove('bg-emerald-500/20', 'border-emerald-400/30', 'text-emerald-200');
+        resultDiv.innerHTML = `<strong>✗ Failed:</strong> ${data.message}`;
+      }
+    } catch (error) {
+      resultDiv.classList.remove('hidden');
+      resultDiv.classList.add('bg-pulse/20', 'border', 'border-pulse/40', 'text-red-100');
+      resultDiv.classList.remove('bg-emerald-500/20', 'border-emerald-400/30', 'text-emerald-200');
+      resultDiv.innerHTML = `<strong>✗ Error:</strong> ${error.message}`;
+    } finally {
+      testEmailBtn.disabled = false;
+      testEmailBtn.textContent = 'Send Test Email';
+    }
+  });
+});
+</script>
 {% endblock %}
