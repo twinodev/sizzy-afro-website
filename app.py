@@ -679,18 +679,21 @@ def admin_dashboard():
 def send_test_email():
     """Send a test email to the admin email address to verify SMTP configuration."""
     from flask import jsonify
-    
-    success, message = send_email_message(
-        subject="Test Email from Dance with Sizzy Afro",
-        body="This is a test email to verify your SMTP configuration is working correctly.",
-        recipients=[app.config["ADMIN_EMAIL"]],
-        return_error=True
-    )
-    
-    if success:
-        return jsonify({"success": True, "message": message}), 200
-    else:
+
+    try:
+        success, message = send_email_message(
+            subject="Test Email from Dance with Sizzy Afro",
+            body="This is a test email to verify your SMTP configuration is working correctly.",
+            recipients=[app.config["ADMIN_EMAIL"]],
+            return_error=True,
+        )
+
+        if success:
+            return jsonify({"success": True, "message": message}), 200
         return jsonify({"success": False, "message": message}), 500
+    except Exception as e:
+        app.logger.exception("Test email endpoint failed: %s", e)
+        return jsonify({"success": False, "message": f"Endpoint error: {type(e).__name__}: {e}"}), 500
 
 
 # Public routes

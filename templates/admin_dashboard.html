@@ -143,6 +143,20 @@
 document.addEventListener('DOMContentLoaded', function() {
   const testEmailBtn = document.getElementById('send-test-email-btn');
   const resultDiv = document.getElementById('email-test-result');
+
+  function showResult(isSuccess, message) {
+    resultDiv.classList.remove('hidden');
+    if (isSuccess) {
+      resultDiv.classList.add('bg-emerald-500/20', 'border', 'border-emerald-400/30', 'text-emerald-200');
+      resultDiv.classList.remove('bg-pulse/20', 'border-pulse/40', 'text-red-100');
+      resultDiv.innerHTML = `<strong>✓ Success!</strong> ${message}`;
+      return;
+    }
+
+    resultDiv.classList.add('bg-pulse/20', 'border', 'border-pulse/40', 'text-red-100');
+    resultDiv.classList.remove('bg-emerald-500/20', 'border-emerald-400/30', 'text-emerald-200');
+    resultDiv.innerHTML = `<strong>✗ Error:</strong> ${message}`;
+  }
   
   testEmailBtn.addEventListener('click', async function() {
     testEmailBtn.disabled = true;
@@ -156,24 +170,22 @@ document.addEventListener('DOMContentLoaded', function() {
           'Content-Type': 'application/json'
         }
       });
-      
-      const data = await response.json();
-      
-      resultDiv.classList.remove('hidden');
-      if (response.ok) {
-        resultDiv.classList.add('bg-emerald-500/20', 'border', 'border-emerald-400/30', 'text-emerald-200');
-        resultDiv.classList.remove('bg-pulse/20', 'border-pulse/40', 'text-red-100');
-        resultDiv.innerHTML = `<strong>✓ Success!</strong> ${data.message}`;
-      } else {
-        resultDiv.classList.add('bg-pulse/20', 'border', 'border-pulse/40', 'text-red-100');
-        resultDiv.classList.remove('bg-emerald-500/20', 'border-emerald-400/30', 'text-emerald-200');
-        resultDiv.innerHTML = `<strong>✗ Failed:</strong> ${data.message}`;
+
+      const rawBody = await response.text();
+      let payload = null;
+      if (rawBody) {
+        try {
+          payload = JSON.parse(rawBody);
+        } catch (parseError) {
+          payload = null;
+        }
       }
+
+      const fallbackMessage = rawBody || `HTTP ${response.status} ${response.statusText}`;
+      const message = payload && payload.message ? payload.message : fallbackMessage;
+      showResult(response.ok, message);
     } catch (error) {
-      resultDiv.classList.remove('hidden');
-      resultDiv.classList.add('bg-pulse/20', 'border', 'border-pulse/40', 'text-red-100');
-      resultDiv.classList.remove('bg-emerald-500/20', 'border-emerald-400/30', 'text-emerald-200');
-      resultDiv.innerHTML = `<strong>✗ Error:</strong> ${error.message}`;
+      showResult(false, error.message);
     } finally {
       testEmailBtn.disabled = false;
       testEmailBtn.textContent = 'Send Test Email';
