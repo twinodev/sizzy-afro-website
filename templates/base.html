@@ -109,6 +109,15 @@
         setTimeout(() => document.body.classList.add('loaded'), 50);
       });
     </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8FJDL25X2K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-8FJDL25X2K');
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
   </head>
   <body class="bg-stage text-white min-h-screen flex flex-col font-[Manrope] antialiased">
