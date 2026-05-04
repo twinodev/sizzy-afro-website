@@ -400,6 +400,35 @@ Reply to: {email}
     return render_template("contact.html")
 
 
+@app.route("/newsletter/subscribe", methods=["POST"])
+def newsletter_subscribe():
+    """Handle newsletter signups from the homepage form.
+
+    Attempts to store the signup as a lightweight Submission record. If the
+    database is unavailable, silently continue so the public site doesn't 500.
+    """
+    email = request.form.get("email", "").strip()
+    if not email:
+        flash("Please enter a valid email address.", "error")
+        return redirect(url_for("home"))
+
+    try:
+        submission = Submission(
+            name="newsletter",
+            email=email,
+            message="newsletter_signup",
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        db.session.add(submission)
+        db.session.commit()
+    except Exception as e:
+        # Don't raise — log and continue so the public homepage remains available.
+        print(f"Failed to record newsletter signup: {e}")
+
+    flash("Thanks — you've been added to the newsletter.", "success")
+    return redirect(url_for("home"))
+
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if session.get("admin_logged_in"):
