@@ -493,6 +493,14 @@ def events():
 
 @app.route("/events/<int:event_id>")
 def event_detail(event_id):
+    # Diagnostic logging to help trace why event details may be missing in production
+    try:
+        print(f"event_detail: entering event_id={event_id}")
+        total_events = Event.query.count()
+        print(f"event_detail: total_events={total_events}")
+    except Exception as e:
+        print(f"event_detail: failed pre-query diagnostics: {e}")
+
     try:
         event = Event.query.get_or_404(event_id)
         testimonials = Testimonial.query.filter_by(event_id=event_id, published=True).all()
@@ -500,8 +508,8 @@ def event_detail(event_id):
         merchandise = Merchandise.query.filter_by(event_id=event_id, published=True).all()
         videos = Video.query.filter_by(event_id=event_id, published=True).all()
     except Exception as e:
-        print(f"Failed to load event detail {event_id}: {e}")
-        # If DB is unavailable, show a generic event not found page
+        # Distinguish not-found vs other DB errors in logs
+        print(f"Failed to load event detail {event_id}: {type(e).__name__}: {e}")
         return render_template("event_detail.html", event=None, testimonials=[], faqs=[], merchandise=[], videos=[])
 
     # Log what was retrieved for easier debugging in production logs
