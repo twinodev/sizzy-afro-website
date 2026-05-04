@@ -542,7 +542,12 @@ def inject_analytics():
 @app.route("/")
 def home():
     # Show latest published posts on home page
-    recent_posts = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).limit(3).all()
+    try:
+        recent_posts = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).limit(3).all()
+    except Exception as e:
+        # If database is unavailable, gracefully show homepage without posts
+        print(f"Failed to fetch recent posts: {e}")
+        recent_posts = []
     return render_template("index.html", recent_posts=recent_posts)
 
 
