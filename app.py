@@ -504,6 +504,12 @@ def event_detail(event_id):
         # If DB is unavailable, show a generic event not found page
         return render_template("event_detail.html", event=None, testimonials=[], faqs=[], merchandise=[], videos=[])
 
+    # Log what was retrieved for easier debugging in production logs
+    try:
+        print(f"event_detail: event_id={event_id} event_found={bool(event)} title={getattr(event, 'title', None)} flyer_url_present={bool(getattr(event, 'flyer_url', None))}")
+    except Exception:
+        pass
+
     return render_template(
         "event_detail.html",
         event=event,
