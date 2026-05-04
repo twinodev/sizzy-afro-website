@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Reviews — Admin — Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+  <h1 class="text-3xl sm:text-4xl font-bold text-white mb-8">Review Settings</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="mb-6 p-4 rounded-lg bg-{% if category == 'success' %}green{% else %}red{% endif %}-500/20 border border-{% if category == 'success' %}green{% else %}red{% endif %}-500/30 text-white">
+        {{ message }}
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" class="card space-y-6">
+    <div>
+      <label class="flex items-center gap-3 cursor-pointer mb-6">
+        <input type="checkbox" name="show_review_widget" {% if settings and settings.show_review_widget %}checked{% endif %}
+               class="w-4 h-4 rounded border-white/10 bg-white/5 checked:bg-afro-500 checked:border-afro-500" />
+        <span class="font-semibold text-afro-100">Show Review Widget on Site</span>
+      </label>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-afro-100 mb-2">Google Review URL *</label>
+      <input type="url" name="google_review_url" value="{{ settings.google_review_url if settings else '' }}" required
+             class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-afro-100/40 focus:outline-none focus:border-afro-300"
+             placeholder="https://g.page/r/... or https://maps.google.com/maps/place/..." />
+      <p class="text-xs text-afro-100/60 mt-2">Get your review link from your Google Business profile</p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-afro-100 mb-2">Review Prompt Text</label>
+      <input type="text" name="review_prompt_text" value="{{ settings.review_prompt_text if settings else 'Love our classes? Leave us a review on Google!' }}"
+             class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-afro-100/40 focus:outline-none focus:border-afro-300" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-afro-100 mb-2">Button Text</label>
+      <input type="text" name="button_text" value="{{ settings.button_text if settings else 'Leave a Review' }}"
+             class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-afro-100/40 focus:outline-none focus:border-afro-300" />
+    </div>
+
+    <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+      <p class="text-sm text-afro-100/80 mb-3"><strong>Preview:</strong></p>
+      <div class="card">
+        <h3 class="text-lg font-bold text-white mb-2">{{ settings.review_prompt_text if settings else 'Love our classes? Leave us a review on Google!' }}</h3>
+        <a href="{{ settings.google_review_url or '#' }}" target="_blank" rel="noopener noreferrer" class="btn-primary text-center">
+          {{ settings.button_text if settings else 'Leave a Review' }}
+        </a>
+      </div>
+    </div>
+
+    <div class="flex gap-3 pt-4">
+      <button type="submit" class="btn-primary">Save Settings</button>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

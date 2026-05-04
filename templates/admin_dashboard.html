@@ -55,15 +55,24 @@
 
   <div class="mb-8">
     <h2 class="text-2xl font-bold text-afro-200 mb-4">System & Settings</h2>
-    <div class="card-soft">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="font-semibold text-afro-200">Email Configuration</p>
-          <p class="text-xs text-afro-100/60 mt-1">Test your SMTP and email delivery settings</p>
+    <div class="space-y-3">
+      <div class="card-soft">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="font-semibold text-afro-200">Email Configuration</p>
+            <p class="text-xs text-afro-100/60 mt-1">Test your SMTP and email delivery settings</p>
+          </div>
+          <button id="send-test-email-btn" class="btn-primary text-sm">Send Test Email</button>
         </div>
-        <button id="send-test-email-btn" class="btn-primary text-sm">Send Test Email</button>
+        <div id="email-test-result" class="mt-4 hidden rounded-lg px-4 py-3 text-sm"></div>
       </div>
-      <div id="email-test-result" class="mt-4 hidden rounded-lg px-4 py-3 text-sm"></div>
+      <a href="{{ url_for('admin_reviews') }}" class="card-soft hover:border-afro-500/50 transition-colors flex items-center justify-between">
+        <div>
+          <p class="font-semibold text-afro-200">Review Settings</p>
+          <p class="text-xs text-afro-100/60 mt-1">Manage Google reviews widget and messaging</p>
+        </div>
+        <span class="text-afro-300">→</span>
+      </a>
     </div>
   </div>
 

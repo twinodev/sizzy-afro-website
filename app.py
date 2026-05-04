@@ -222,6 +222,16 @@ class Video(db.Model):
     created_at = db.Column(db.String(50), nullable=False)
 
 
+class ReviewSettings(db.Model):
+    __tablename__ = "review_settings"
+    id = db.Column(db.Integer, primary_key=True)
+    google_review_url = db.Column(db.Text, nullable=True)
+    show_review_widget = db.Column(db.Boolean, default=True)
+    review_prompt_text = db.Column(db.Text, default="Love our classes? Leave us a review on Google!")
+    button_text = db.Column(db.String(255), default="Leave a Review")
+    updated_at = db.Column(db.String(50), nullable=False)
+
+
 def init_db():
     """Initialize database tables"""
     with app.app_context():
@@ -480,6 +490,12 @@ def sponsors():
 def partnerships():
     plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
     return render_template("partnerships.html", plans=plans)
+
+
+@app.route("/reviews")
+def reviews():
+    settings = ReviewSettings.query.first()
+    return render_template("reviews.html", settings=settings)
 
 
 @app.route("/posts")
@@ -1157,6 +1173,34 @@ def admin_videos_delete(video_id):
     db.session.commit()
     flash("Video deleted successfully.", "success")
     return redirect(url_for("admin_videos"))
+
+
+# Admin Reviews Settings
+@app.route("/admin/reviews", methods=["GET", "POST"])
+@admin_required
+def admin_reviews():
+    settings = ReviewSettings.query.first()
+    
+    if request.method == "POST":
+        if not settings:
+            settings = ReviewSettings()
+        
+        settings.google_review_url = request.form.get("google_review_url", "").strip()
+        settings.review_prompt_text = request.form.get("review_prompt_text", "").strip()
+        settings.button_text = request.form.get("button_text", "").strip()
+        settings.show_review_widget = request.form.get("show_review_widget") == "on"
+        settings.updated_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        
+        if settings.id:
+            db.session.commit()
+        else:
+            db.session.add(settings)
+            db.session.commit()
+        
+        flash("Review settings updated successfully.", "success")
+        return redirect(url_for("admin_reviews"))
+    
+    return render_template("admin_reviews.html", settings=settings)
 
 
 # Initialize database on startup (safely for serverless)

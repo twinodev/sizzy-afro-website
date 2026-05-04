@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Reviews — Dance with Sizzy Afro{% endblock %}
+
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+  <!-- Hero Section -->
+  <div class="text-center mb-12">
+    <p class="eyebrow">Community Love</p>
+    <h1 class="text-4xl sm:text-5xl font-extrabold mt-3">What Our Community Says</h1>
+    <p class="mt-5 text-afro-100/90 max-w-2xl mx-auto text-lg">
+      We're proud to share the feedback from our amazing dancers and students. Your reviews help us grow!
+    </p>
+  </div>
+
+  <!-- Review Widget -->
+  {% if settings and settings.show_review_widget and settings.google_review_url %}
+    <div class="card-hero mb-16 text-center py-12 px-6 sm:px-12">
+      <div class="flex justify-center mb-4">
+        <svg class="w-12 h-12 text-afro-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <svg class="w-12 h-12 text-afro-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <svg class="w-12 h-12 text-afro-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <svg class="w-12 h-12 text-afro-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <svg class="w-12 h-12 text-afro-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">Rate Us on Google</h2>
+      <p class="text-afro-100/80 mb-6 max-w-xl mx-auto">{{ settings.review_prompt_text }}</p>
+      <a href="{{ settings.google_review_url }}" target="_blank" rel="noopener noreferrer" class="btn-primary inline-block">
+        {{ settings.button_text }}
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Why Leave a Review -->
+  <div class="mb-12">
+    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-8 text-center">Why Your Review Matters</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="card">
+        <div class="text-3xl mb-4">⭐</div>
+        <h3 class="font-bold text-white mb-2">Help Others Discover Us</h3>
+        <p class="text-afro-100/80 text-sm">Your review helps new dancers find us and learn about our classes and events.</p>
+      </div>
+      <div class="card">
+        <div class="text-3xl mb-4">💪</div>
+        <h3 class="font-bold text-white mb-2">Motivate Our Team</h3>
+        <p class="text-afro-100/80 text-sm">We love hearing about your experience and what makes our community special to you.</p>
+      </div>
+      <div class="card">
+        <div class="text-3xl mb-4">📈</div>
+        <h3 class="font-bold text-white mb-2">Build Community Trust</h3>
+        <p class="text-afro-100/80 text-sm">Reviews help us build credibility and show the world what our dancers are experiencing.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to Leave a Review -->
+  <div class="card-soft mb-12">
+    <h2 class="text-2xl font-bold text-white mb-6">How to Leave a Review</h2>
+    <ol class="space-y-4 text-afro-100/90">
+      <li class="flex gap-4">
+        <span class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-afro-500 text-white font-bold">1</span>
+        <div>
+          <p class="font-semibold">Click the button above</p>
+          <p class="text-sm text-afro-100/70">You'll be taken directly to our Google Business profile.</p>
+        </div>
+      </li>
+      <li class="flex gap-4">
+        <span class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-afro-500 text-white font-bold">2</span>
+        <div>
+          <p class="font-semibold">Sign in to your Google account</p>
+          <p class="text-sm text-afro-100/70">If you're not already signed in.</p>
+        </div>
+      </li>
+      <li class="flex gap-4">
+        <span class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-afro-500 text-white font-bold">3</span>
+        <div>
+          <p class="font-semibold">Rate us with stars</p>
+          <p class="text-sm text-afro-100/70">Choose from 1 to 5 stars to rate your experience.</p>
+        </div>
+      </li>
+      <li class="flex gap-4">
+        <span class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-afro-500 text-white font-bold">4</span>
+        <div>
+          <p class="font-semibold">Write your review (optional)</p>
+          <p class="text-sm text-afro-100/70">Share what you loved about your experience with us!</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <!-- Call to Action -->
+  {% if settings and settings.show_review_widget and settings.google_review_url %}
+    <div class="text-center">
+      <p class="text-afro-100/90 mb-6">Ready to share your Afro dance experience?</p>
+      <a href="{{ settings.google_review_url }}" target="_blank" rel="noopener noreferrer" class="btn-primary">
+        {{ settings.button_text }}
+      </a>
+    </div>
+  {% else %}
+    <div class="card-soft text-center py-12">
+      <p class="text-afro-100/60">Review settings not configured. Please contact the administrator.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

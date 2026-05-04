@@ -87,6 +87,7 @@
           <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
           <a href="{{ url_for('posts') }}" class="nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
           <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
+          <a href="{{ url_for('reviews') }}" class="nav-link {% if request.endpoint == 'reviews' %}active-link{% endif %}">Reviews</a>
           <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
           <a href="{{ url_for('contact') }}" class="nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
         </nav>
@@ -99,6 +100,7 @@
           <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
           <a href="{{ url_for('posts') }}" class="mobile-nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
           <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
+          <a href="{{ url_for('reviews') }}" class="mobile-nav-link {% if request.endpoint == 'reviews' %}active-link{% endif %}">Reviews</a>
           <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
           <a href="{{ url_for('contact') }}" class="mobile-nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
         </div>
