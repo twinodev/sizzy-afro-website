@@ -106,7 +106,14 @@
     </header>
 
     <main class="flex-1">
-      {% block content %}{% endblock %}
+      {% block content %}
+      <script type="text/javascript">
+    aclib.runAutoTag({
+        zoneId: 'ot8gzcm740',
+    });
+  </script>
+
+      {% endblock %}
     </main>
 
     <footer class="mt-16 border-t border-white/10">
