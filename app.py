@@ -98,7 +98,7 @@ app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 app.config["SUPABASE_FLYER_BUCKET"] = os.getenv("SUPABASE_FLYER_BUCKET", "event-flyers")
 app.config["SUPABASE_LOGO_BUCKET"] = os.getenv("SUPABASE_LOGO_BUCKET", "sponsor-logos")
 app.config["SUPABASE_POST_BUCKET"] = os.getenv("SUPABASE_POST_BUCKET", "post-images")
-    app.config["GA_TRACKING_ID"] = os.getenv("GA_TRACKING_ID", "")
+app.config["GA_TRACKING_ID"] = os.getenv("GA_TRACKING_ID", "")
 
 # Initialize mail lazily
 mail = None
