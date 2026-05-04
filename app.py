@@ -244,6 +244,14 @@ class ClassSchedule(db.Model):
     created_at = db.Column(db.String(50), nullable=False)
 
 
+class SocialLink(db.Model):
+    __tablename__ = "social_links"
+    id = db.Column(db.Integer, primary_key=True)
+    platform = db.Column(db.String(50), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.String(50), nullable=False)
+
+
 def init_db():
     """Initialize database tables"""
     with app.app_context():
@@ -1405,6 +1413,125 @@ def admin_classes_delete(schedule_id):
         print(f"Failed to delete schedule: {e}")
         flash("Failed to delete schedule.", "error")
     return redirect(url_for("admin_classes"))
+
+
+# Admin Comments
+@app.route("/admin/comments")
+@admin_required
+def admin_comments():
+    try:
+        comments = Comment.query.order_by(Comment.created_at.desc()).all()
+    except Exception as e:
+        print(f"Failed to load comments: {e}")
+        comments = []
+    return render_template("admin_comments.html", comments=comments)
+
+
+# Admin Newsletter
+@app.route("/admin/newsletter")
+@admin_required
+def admin_newsletter():
+    try:
+        subscribers = Submission.query.filter_by(name="newsletter").order_by(Submission.created_at.desc()).all()
+    except Exception as e:
+        print(f"Failed to load newsletter subscribers: {e}")
+        subscribers = []
+    return render_template("admin_newsletter.html", subscribers=subscribers)
+
+
+# Admin Social Links
+@app.route("/admin/social-links")
+@admin_required
+def admin_social_links():
+    try:
+        links = SocialLink.query.order_by(SocialLink.id.asc()).all()
+    except Exception as e:
+        print(f"Failed to load social links: {e}")
+        links = []
+    return render_template("admin_social_links.html", links=links)
+
+
+@app.route("/admin/social-links/create", methods=["GET", "POST"])
+@admin_required
+def admin_social_links_create():
+    if request.method == "POST":
+        platform = request.form.get("platform", "").strip()
+        url = request.form.get("url", "").strip()
+
+        if not platform or not url:
+            flash("Platform and URL are required.", "error")
+            return redirect(url_for("admin_social_links_create"))
+
+        try:
+            link = SocialLink(
+                platform=platform,
+                url=url,
+                created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            db.session.add(link)
+            db.session.commit()
+            flash("Social link created.", "success")
+            return redirect(url_for("admin_social_links"))
+        except Exception as e:
+            print(f"Failed to create social link: {e}")
+            flash("Failed to create social link.", "error")
+            return redirect(url_for("admin_social_links_create"))
+
+    return render_template("admin_social_links_form.html", link=None)
+
+
+@app.route("/admin/social-links/edit/<int:link_id>", methods=["GET", "POST"])
+@admin_required
+def admin_social_links_edit(link_id):
+    link = SocialLink.query.get_or_404(link_id)
+
+    if request.method == "POST":
+        link.platform = request.form.get("platform", "").strip()
+        link.url = request.form.get("url", "").strip()
+        db.session.commit()
+        flash("Social link updated.", "success")
+        return redirect(url_for("admin_social_links"))
+
+    return render_template("admin_social_links_form.html", link=link)
+
+
+@app.route("/admin/social-links/delete/<int:link_id>", methods=["POST"])
+@admin_required
+def admin_social_links_delete(link_id):
+    link = SocialLink.query.get_or_404(link_id)
+    try:
+        db.session.delete(link)
+        db.session.commit()
+        flash("Social link deleted.", "success")
+    except Exception as e:
+        print(f"Failed to delete social link: {e}")
+        flash("Failed to delete social link.", "error")
+    return redirect(url_for("admin_social_links"))
+
+
+# Test Email
+@app.route("/admin/send-test-email", methods=["POST"])
+@admin_required
+def send_test_email():
+    """Send a test email to verify SMTP configuration."""
+    try:
+        email_body = """
+Test Email from Dance with Sizzy Afro
+
+This is a test email to verify your SMTP configuration is working correctly.
+
+If you received this, your email setup is good to go!
+        """
+        result = send_notification_email(
+            subject="Test Email from Dance with Sizzy Afro",
+            body=email_body
+        )
+        if result:
+            return {"message": "Test email sent successfully!"}, 200
+        else:
+            return {"message": "Failed to send test email. Check your SMTP configuration."}, 400
+    except Exception as e:
+        return {"message": f"Error: {str(e)}"}, 500
 
 
 # Initialize database on startup (safely for serverless)
