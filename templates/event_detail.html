@@ -1,98 +1,135 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}{{ event.title }} | Dance with Sizzy Afro{% endblock %}
+{% block title %}{{ event.title }} — Dance with Sizzy Afro{% endblock %}
 
 {% block content %}
-<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-  <a href="{{ url_for('events') }}"
-    class="inline-flex items-center gap-2 text-afro-200 hover:text-afro-400 transition-colors mb-6">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-    </svg>
-    Back to Events
-  </a>
-
-  <article class="card">
-    {% if event.flyer_url %}
-    <img src="{{ event.flyer_url }}" alt="{{ event.title }} flyer"
-      class="w-full h-64 sm:h-96 object-cover rounded-xl mb-6 border border-white/10" />
-    {% endif %}
-
-    <div class="flex flex-wrap gap-4 text-sm">
-      <div class="flex items-center gap-2 text-afro-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        {{ event.event_date }}
-      </div>
-      {% if event.event_time %}
-      <div class="flex items-center gap-2 text-afro-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        {{ event.event_time }}
-      </div>
-      {% endif %}
-      {% if event.location %}
-      <div class="flex items-center gap-2 text-afro-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        {{ event.location }}
-      </div>
-      {% endif %}
-      {% if event.price %}
-      <div class="flex items-center gap-2 text-afro-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        {{ event.price }}
-      </div>
-      {% endif %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+  <!-- Header -->
+  <div class="mb-12">
+    <a href="{{ url_for('events') }}" class="text-afro-300 hover:text-afro-200 text-sm font-semibold mb-6 inline-block">
+      ← Back to Events
+    </a>
+    <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4">{{ event.title }}</h1>
+    <div class="flex flex-col sm:flex-row gap-4 text-afro-100/70">
+      <span>📅 {{ event.event_date }}</span>
+      {% if event.location %}<span>📍 {{ event.location }}</span>{% endif %}
     </div>
+  </div>
 
-    <h1 class="text-3xl sm:text-4xl font-extrabold text-afro-200 mt-6">{{ event.title }}</h1>
-
-    {% if event.description %}
-    <div class="mt-6 text-afro-100/90 prose prose-invert max-w-none">
-      {{ event.description }}
+  <!-- Event Flyer -->
+  {% if event.flyer_url %}
+    <div class="mb-12 rounded-xl overflow-hidden border border-white/10 max-h-96">
+      <img src="{{ event.flyer_url }}" alt="{{ event.title }}" class="w-full h-auto object-cover" />
     </div>
-    {% endif %}
+  {% endif %}
 
-    {% if event.registration_link %}
-    <div class="mt-8">
-      <a href="{{ event.registration_link }}" target="_blank" rel="noopener noreferrer"
-        class="inline-flex items-center gap-2 px-8 py-4 bg-afro-500 hover:bg-afro-600 text-white font-bold rounded-lg transition-colors text-lg">
-        Register Now
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
-      </a>
+  <!-- Event Description -->
+  {% if event.description %}
+    <div class="card-soft mb-12">
+      <h2 class="text-2xl font-bold text-white mb-4">About This Event</h2>
+      <p class="text-afro-100/80 leading-relaxed whitespace-pre-wrap">{{ event.description }}</p>
     </div>
-    {% endif %}
-  </article>
+  {% endif %}
 
-  <section class="mt-12">
-    <h2 class="text-2xl font-bold text-afro-200 mb-6">More Events</h2>
-    <div class="grid md:grid-cols-3 gap-6">
-      {% for other_event in more_events %}
-      <a href="{{ url_for('event_detail', event_id=other_event.id) }}"
-        class="card hover:border-afro-500 transition-colors">
-        {% if other_event.flyer_url %}
-        <img src="{{ other_event.flyer_url }}" alt="{{ other_event.title }}"
-          class="w-full h-40 object-cover rounded-lg mb-3" />
-        {% endif %}
-        <p class="text-xs text-afro-200 font-semibold">{{ other_event.event_date }}</p>
-        <h3 class="font-bold text-afro-200 mt-1">{{ other_event.title }}</h3>
-      </a>
-      {% endfor %}
-    </div>
-  </section>
-</section>
+  <!-- Videos Section -->
+  {% if videos %}
+    <section class="mb-12">
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">Videos</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for video in videos %}
+          <div class="card-soft group">
+            <div class="relative overflow-hidden rounded-lg mb-4 aspect-video bg-black">
+              {% if video.thumbnail_url %}
+                <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="w-full h-full object-cover" />
+              {% else %}
+                <div class="w-full h-full flex items-center justify-center text-white/30">▶ Video</div>
+              {% endif %}
+              <a href="{{ video.url }}" target="_blank" rel="noopener noreferrer" class="absolute inset-0 flex items-center justify-center group-hover:bg-black/30 transition-all">
+                <svg class="w-12 h-12 text-white opacity-80 group-hover:opacity-100" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </a>
+            </div>
+            <h3 class="font-bold text-white">{{ video.title }}</h3>
+            {% if video.description %}<p class="text-sm text-afro-100/70 mt-2">{{ video.description }}</p>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- Testimonials Section -->
+  {% if testimonials %}
+    <section class="mb-12">
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">What People Say</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for testimonial in testimonials %}
+          <div class="card">
+            <div class="flex items-start gap-3 mb-4">
+              {% if testimonial.image_url %}
+                <img src="{{ testimonial.image_url }}" alt="{{ testimonial.name }}" class="w-12 h-12 rounded-full object-cover" />
+              {% else %}
+                <div class="w-12 h-12 rounded-full bg-afro-300/20 flex items-center justify-center text-sm font-bold text-white">{{ testimonial.name[0]|upper }}</div>
+              {% endif %}
+              <div>
+                <p class="font-semibold text-white">{{ testimonial.name }}</p>
+                {% if testimonial.title %}<p class="text-xs text-afro-100/60">{{ testimonial.title }}</p>{% endif %}
+              </div>
+            </div>
+            <p class="text-afro-100/80 italic">{{ testimonial.message }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- Merchandise Section -->
+  {% if merchandise %}
+    <section class="mb-12">
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">Merchandise</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in merchandise %}
+          <div class="card group">
+            {% if item.image_url %}
+              <div class="mb-4 overflow-hidden rounded-lg h-48">
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              </div>
+            {% endif %}
+            <h3 class="font-bold text-white">{{ item.name }}</h3>
+            {% if item.description %}<p class="text-sm text-afro-100/70 mt-2">{{ item.description }}</p>{% endif %}
+            {% if item.price %}<p class="text-lg font-semibold text-afro-300 mt-3">{{ item.price }}</p>{% endif %}
+            {% if item.purchase_url %}
+              <a href="{{ item.purchase_url }}" target="_blank" rel="noopener noreferrer" class="btn-primary mt-4 w-full text-center">Get It</a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- FAQs Section -->
+  {% if faqs %}
+    <section class="mb-12">
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">Frequently Asked Questions</h2>
+      <div class="space-y-3">
+        {% for faq in faqs %}
+          <details class="card group cursor-pointer">
+            <summary class="font-semibold text-white group-open:text-afro-300 transition-colors flex items-center justify-between py-2">
+              {{ faq.question }}
+              <svg class="w-5 h-5 group-open:rotate-180 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+              </svg>
+            </summary>
+            <div class="text-afro-100/80 pt-3 border-t border-white/10 mt-2">{{ faq.answer }}</div>
+          </details>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- Back Link -->
+  <div class="flex justify-center">
+    <a href="{{ url_for('events') }}" class="btn-secondary">← Back to Events</a>
+  </div>
+</div>
 {% endblock %}
