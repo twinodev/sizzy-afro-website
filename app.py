@@ -232,6 +232,18 @@ class GalleryItem(db.Model):
     created_at = db.Column(db.String(50), nullable=False)
 
 
+class ClassSchedule(db.Model):
+    __tablename__ = "class_schedules"
+    id = db.Column(db.Integer, primary_key=True)
+    day_of_week = db.Column(db.String(20), nullable=False)
+    start_time = db.Column(db.String(20), nullable=False)
+    end_time = db.Column(db.String(20), nullable=False)
+    class_name = db.Column(db.String(255), nullable=False)
+    level = db.Column(db.String(50))
+    location = db.Column(db.String(255))
+    created_at = db.Column(db.String(50), nullable=False)
+
+
 def init_db():
     """Initialize database tables"""
     with app.app_context():
@@ -1311,6 +1323,88 @@ def admin_gallery_delete(item_id):
         print(f"Failed to delete gallery item: {e}")
         flash("Failed to delete gallery item.", "error")
     return redirect(url_for("admin_gallery"))
+
+
+# Admin Classes (schedule)
+@app.route("/admin/classes")
+@admin_required
+def admin_classes():
+    try:
+        schedules = ClassSchedule.query.order_by(ClassSchedule.id.asc()).all()
+    except Exception as e:
+        print(f"Failed to load class schedules: {e}")
+        schedules = []
+    return render_template("admin_classes.html", schedules=schedules)
+
+
+@app.route("/admin/classes/create", methods=["GET", "POST"])
+@admin_required
+def admin_classes_create():
+    if request.method == "POST":
+        day_of_week = request.form.get("day_of_week", "").strip()
+        start_time = request.form.get("start_time", "").strip()
+        end_time = request.form.get("end_time", "").strip()
+        class_name = request.form.get("class_name", "").strip()
+        level = request.form.get("level", "").strip() or None
+        location = request.form.get("location", "").strip() or None
+
+        if not day_of_week or not start_time or not end_time or not class_name:
+            flash("Day, time, and class name are required.", "error")
+            return redirect(url_for("admin_classes_create"))
+
+        try:
+            sched = ClassSchedule(
+                day_of_week=day_of_week,
+                start_time=start_time,
+                end_time=end_time,
+                class_name=class_name,
+                level=level,
+                location=location,
+                created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            db.session.add(sched)
+            db.session.commit()
+            flash("Class scheduled.", "success")
+            return redirect(url_for("admin_classes"))
+        except Exception as e:
+            print(f"Failed to create schedule: {e}")
+            flash("Failed to create schedule.", "error")
+            return redirect(url_for("admin_classes_create"))
+
+    return render_template("admin_classes_form.html", schedule=None)
+
+
+@app.route("/admin/classes/edit/<int:schedule_id>", methods=["GET", "POST"])
+@admin_required
+def admin_classes_edit(schedule_id):
+    schedule = ClassSchedule.query.get_or_404(schedule_id)
+
+    if request.method == "POST":
+        schedule.day_of_week = request.form.get("day_of_week", "").strip()
+        schedule.start_time = request.form.get("start_time", "").strip()
+        schedule.end_time = request.form.get("end_time", "").strip()
+        schedule.class_name = request.form.get("class_name", "").strip()
+        schedule.level = request.form.get("level", "").strip() or None
+        schedule.location = request.form.get("location", "").strip() or None
+        db.session.commit()
+        flash("Schedule updated.", "success")
+        return redirect(url_for("admin_classes"))
+
+    return render_template("admin_classes_form.html", schedule=schedule)
+
+
+@app.route("/admin/classes/delete/<int:schedule_id>", methods=["POST"])
+@admin_required
+def admin_classes_delete(schedule_id):
+    schedule = ClassSchedule.query.get_or_404(schedule_id)
+    try:
+        db.session.delete(schedule)
+        db.session.commit()
+        flash("Schedule deleted.", "success")
+    except Exception as e:
+        print(f"Failed to delete schedule: {e}")
+        flash("Failed to delete schedule.", "error")
+    return redirect(url_for("admin_classes"))
 
 
 # Initialize database on startup (safely for serverless)
