@@ -222,6 +222,16 @@ class Video(db.Model):
     created_at = db.Column(db.String(50), nullable=False)
 
 
+class GalleryItem(db.Model):
+    __tablename__ = "gallery"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(100))
+    image_url = db.Column(db.Text)
+    featured = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.String(50), nullable=False)
+
+
 def init_db():
     """Initialize database tables"""
     with app.app_context():
@@ -1225,6 +1235,82 @@ def admin_videos_delete(video_id):
     db.session.commit()
     flash("Video deleted successfully.", "success")
     return redirect(url_for("admin_videos"))
+
+
+# Admin Gallery
+@app.route("/admin/gallery")
+@admin_required
+def admin_gallery():
+    try:
+        gallery = GalleryItem.query.order_by(GalleryItem.created_at.desc()).all()
+    except Exception as e:
+        print(f"Failed to load gallery items: {e}")
+        gallery = []
+    return render_template("admin_gallery.html", gallery=gallery)
+
+
+@app.route("/admin/gallery/create", methods=["GET", "POST"])
+@admin_required
+def admin_gallery_create():
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        category = request.form.get("category", "").strip() or None
+        image_url = request.form.get("image_url", "").strip() or None
+        featured = request.form.get("featured") == "on"
+
+        if not title:
+            flash("Title is required.", "error")
+            return redirect(url_for("admin_gallery_create"))
+
+        try:
+            item = GalleryItem(
+                title=title,
+                category=category,
+                image_url=image_url,
+                featured=featured,
+                created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            db.session.add(item)
+            db.session.commit()
+            flash("Gallery item created.", "success")
+            return redirect(url_for("admin_gallery"))
+        except Exception as e:
+            print(f"Failed to create gallery item: {e}")
+            flash("Failed to create gallery item.", "error")
+            return redirect(url_for("admin_gallery_create"))
+
+    return render_template("admin_gallery_form.html", item=None)
+
+
+@app.route("/admin/gallery/edit/<int:item_id>", methods=["GET", "POST"])
+@admin_required
+def admin_gallery_edit(item_id):
+    item = GalleryItem.query.get_or_404(item_id)
+
+    if request.method == "POST":
+        item.title = request.form.get("title", "").strip()
+        item.category = request.form.get("category", "").strip() or None
+        item.image_url = request.form.get("image_url", "").strip() or None
+        item.featured = request.form.get("featured") == "on"
+        db.session.commit()
+        flash("Gallery item updated.", "success")
+        return redirect(url_for("admin_gallery"))
+
+    return render_template("admin_gallery_form.html", item=item)
+
+
+@app.route("/admin/gallery/delete/<int:item_id>", methods=["POST"])
+@admin_required
+def admin_gallery_delete(item_id):
+    item = GalleryItem.query.get_or_404(item_id)
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        flash("Gallery item deleted.", "success")
+    except Exception as e:
+        print(f"Failed to delete gallery item: {e}")
+        flash("Failed to delete gallery item.", "error")
+    return redirect(url_for("admin_gallery"))
 
 
 # Initialize database on startup (safely for serverless)
