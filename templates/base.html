@@ -64,6 +64,27 @@
       });
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+     {% if ga_tracking_id %}
+     <!-- Google Analytics -->
+     <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_tracking_id }}"></script>
+     <script>
+       window.dataLayer = window.dataLayer || [];
+       function gtag(){dataLayer.push(arguments);}
+       gtag('js', new Date());
+       gtag('config', '{{ ga_tracking_id }}', {
+         'anonymize_ip': true,
+         'allow_google_signals': false,
+         'allow_ad_personalization_signals': false
+       });
+
+       // Custom trackEvent function for convenience
+       function trackEvent(eventName, eventData = {}) {
+         if (typeof gtag !== 'undefined') {
+           gtag('event', eventName, eventData);
+         }
+       }
+     </script>
+     {% endif %}
   </head>
   <body class="bg-stage text-white min-h-screen flex flex-col font-[Manrope] antialiased">
     <div class="site-aura" aria-hidden="true"></div>
