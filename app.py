@@ -454,24 +454,34 @@ def admin_dashboard():
 # Public routes
 @app.route("/events")
 def events():
-    events_list = Event.query.order_by(Event.event_date.asc()).all()
+    try:
+        events_list = Event.query.order_by(Event.event_date.asc()).all()
+    except Exception as e:
+        print(f"Failed to load events: {e}")
+        events_list = []
     return render_template("events.html", events=events_list)
 
 
 @app.route("/events/<int:event_id>")
 def event_detail(event_id):
-    event = Event.query.get_or_404(event_id)
-    testimonials = Testimonial.query.filter_by(event_id=event_id, published=True).all()
-    faqs = FAQ.query.filter_by(event_id=event_id).order_by(FAQ.order.asc()).all()
-    merchandise = Merchandise.query.filter_by(event_id=event_id, published=True).all()
-    videos = Video.query.filter_by(event_id=event_id, published=True).all()
+    try:
+        event = Event.query.get_or_404(event_id)
+        testimonials = Testimonial.query.filter_by(event_id=event_id, published=True).all()
+        faqs = FAQ.query.filter_by(event_id=event_id).order_by(FAQ.order.asc()).all()
+        merchandise = Merchandise.query.filter_by(event_id=event_id, published=True).all()
+        videos = Video.query.filter_by(event_id=event_id, published=True).all()
+    except Exception as e:
+        print(f"Failed to load event detail {event_id}: {e}")
+        # If DB is unavailable, show a generic event not found page
+        return render_template("event_detail.html", event=None, testimonials=[], faqs=[], merchandise=[], videos=[])
+
     return render_template(
         "event_detail.html",
         event=event,
         testimonials=testimonials,
         faqs=faqs,
         merchandise=merchandise,
-        videos=videos
+        videos=videos,
     )
 
 
@@ -489,13 +499,23 @@ def partnerships():
 
 @app.route("/posts")
 def posts():
-    posts_list = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).all()
+    try:
+        posts_list = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).all()
+    except Exception as e:
+        print(f"Failed to load posts: {e}")
+        posts_list = []
     return render_template("posts.html", posts=posts_list)
 
 
 @app.route("/posts/<int:post_id>", methods=["GET", "POST"])
 def post_detail(post_id):
-    post = Post.query.get_or_404(post_id)
+    try:
+        post = Post.query.get_or_404(post_id)
+    except Exception as e:
+        print(f"Failed to load post {post_id}: {e}")
+        flash("Unable to load post at this time.", "error")
+        return redirect(url_for("posts"))
+
     if not post.published:
         flash("This post is not published.", "error")
         return redirect(url_for("posts"))
