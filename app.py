@@ -9,6 +9,7 @@ from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
+from types import SimpleNamespace
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
 
@@ -1157,11 +1158,21 @@ def admin_testimonials():
 # Public testimonials page
 @app.route("/testimonials")
 def testimonials_page():
-    try:
-        testimonials_list = Testimonial.query.filter_by(published=True).order_by(Testimonial.created_at.desc()).all()
-    except Exception as e:
-        print(f"Failed to load testimonials: {e}")
-        testimonials_list = []
+    # If database lacks event_id column, avoid ORM select that references it
+    if not _table_has_column('testimonials', 'event_id'):
+        try:
+            rows = db.session.execute(text("SELECT id, name, title, message, image_url, published, created_at FROM testimonials WHERE published = true ORDER BY created_at DESC")).fetchall()
+            testimonials_list = [SimpleNamespace(**dict(row)) for row in rows]
+        except Exception as e:
+            print(f"Failed to load testimonials (fallback): {e}")
+            testimonials_list = []
+    else:
+        try:
+            testimonials_list = Testimonial.query.filter_by(published=True).order_by(Testimonial.created_at.desc()).all()
+        except Exception as e:
+            print(f"Failed to load testimonials: {e}")
+            testimonials_list = []
+
     # Split featured (first 2) from the rest for the template
     featured = testimonials_list[:2]
     others = testimonials_list[2:]
@@ -1331,16 +1342,20 @@ def admin_merchandise_create():
                 flash(str(error), "error")
                 return redirect(url_for("admin_merchandise_create"))
         
-        merchandise = Merchandise(
-            event_id=event_id,
-            name=name,
-            description=description or None,
-            image_url=image_url,
-            price=price or None,
-            purchase_url=purchase_url or None,
-            published=True,
-            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        )
+        merch_kwargs = {
+            "name": name,
+            "description": description or None,
+            "image_url": image_url,
+            "price": price or None,
+            "purchase_url": purchase_url or None,
+            "published": True,
+            "created_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        if _table_has_column("merchandise", "event_id"):
+            merch_kwargs["event_id"] = event_id
+
+        merchandise = Merchandise(**merch_kwargs)
         db.session.add(merchandise)
         db.session.commit()
         flash("Merchandise created successfully.", "success")
@@ -1360,7 +1375,8 @@ def admin_merchandise_edit(item_id):
         item.description = request.form.get("description", "").strip() or None
         item.price = request.form.get("price", "").strip() or None
         item.purchase_url = request.form.get("purchase_url", "").strip() or None
-        item.event_id = request.form.get("event_id", type=int) or None
+        if _table_has_column("merchandise", "event_id"):
+            item.event_id = request.form.get("event_id", type=int) or None
         item.published = request.form.get("published") == "on"
         
         image_file = request.files.get("image_file")
@@ -1415,15 +1431,18 @@ def admin_videos_create():
             flash("Title and URL are required.", "error")
             return redirect(url_for("admin_videos_create"))
         
-        video = Video(
-            event_id=event_id,
-            title=title,
-            description=description or None,
-            url=url,
-            thumbnail_url=thumbnail_url or None,
-            published=True,
-            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        )
+        video_kwargs = {
+            "title": title,
+            "description": description or None,
+            "url": url,
+            "thumbnail_url": thumbnail_url or None,
+            "published": True,
+            "created_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        if _table_has_column("videos", "event_id"):
+            video_kwargs["event_id"] = event_id
+
+        video = Video(**video_kwargs)
         db.session.add(video)
         db.session.commit()
         flash("Video created successfully.", "success")
@@ -1443,7 +1462,8 @@ def admin_videos_edit(video_id):
         video.description = request.form.get("description", "").strip() or None
         video.url = request.form.get("url", "").strip()
         video.thumbnail_url = request.form.get("thumbnail_url", "").strip() or None
-        video.event_id = request.form.get("event_id", type=int) or None
+        if _table_has_column("videos", "event_id"):
+            video.event_id = request.form.get("event_id", type=int) or None
         video.published = request.form.get("published") == "on"
         db.session.commit()
         flash("Video updated successfully.", "success")
@@ -1738,6 +1758,23 @@ If you received this, your email setup is good to go!
             return {"message": "Failed to send test email. Check your SMTP configuration."}, 400
     except Exception as e:
         return {"message": f"Error: {str(e)}"}, 500
+
+
+# Helper: check table columns cache (used to avoid runtime errors on DBs missing columns)
+_TABLE_COLUMN_CACHE = {}
+
+def _table_has_column(table_name, column_name):
+    key = f"{table_name}.{column_name}"
+    if key in _TABLE_COLUMN_CACHE:
+        return _TABLE_COLUMN_CACHE[key]
+    try:
+        inspector = inspect(db.engine)
+        cols = {c["name"] for c in inspector.get_columns(table_name)}
+        has = column_name in cols
+    except Exception:
+        has = False
+    _TABLE_COLUMN_CACHE[key] = has
+    return has
 
 
 # Initialize database on startup (safely for serverless)
