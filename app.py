@@ -257,6 +257,7 @@ def init_db():
     with app.app_context():
         db.create_all()
         _ensure_event_flyer_column()
+        _ensure_merchandise_event_id_column()
 
 
 def _ensure_event_flyer_column():
@@ -267,6 +268,21 @@ def _ensure_event_flyer_column():
     if "flyer_url" not in columns:
         db.session.execute(text("ALTER TABLE events ADD COLUMN flyer_url TEXT"))
         db.session.commit()
+
+
+def _ensure_merchandise_event_id_column():
+    """Add event_id to existing merchandise tables if needed."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("merchandise")}
+
+        if "event_id" not in columns:
+            db.session.execute(text("ALTER TABLE merchandise ADD COLUMN event_id INTEGER REFERENCES events(id)"))
+            db.session.commit()
+            print("Added event_id column to merchandise table")
+    except Exception as e:
+        print(f"Migration: Could not add event_id to merchandise: {e}")
+
 
 
 def _allowed_image_filename(filename):
@@ -334,6 +350,10 @@ def _upload_logo_to_supabase(file_storage):
 
 def _upload_post_image_to_supabase(file_storage):
     return _upload_image_to_supabase(file_storage, app.config["SUPABASE_POST_BUCKET"], "posts", "post image")
+
+
+def _upload_merchandise_image_to_supabase(file_storage):
+    return _upload_image_to_supabase(file_storage, app.config["SUPABASE_POST_BUCKET"], "merchandise", "merchandise image")
 
 
 def admin_required(view_func):
@@ -1252,15 +1272,25 @@ def admin_merchandise_create():
         price = request.form.get("price", "").strip()
         purchase_url = request.form.get("purchase_url", "").strip()
         event_id = request.form.get("event_id", type=int) or None
+        image_file = request.files.get("image_file")
         
         if not name:
             flash("Name is required.", "error")
             return redirect(url_for("admin_merchandise_create"))
         
+        image_url = None
+        if image_file and image_file.filename:
+            try:
+                image_url = _upload_merchandise_image_to_supabase(image_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_merchandise_create"))
+        
         merchandise = Merchandise(
             event_id=event_id,
             name=name,
             description=description or None,
+            image_url=image_url,
             price=price or None,
             purchase_url=purchase_url or None,
             published=True,
@@ -1287,6 +1317,15 @@ def admin_merchandise_edit(item_id):
         item.purchase_url = request.form.get("purchase_url", "").strip() or None
         item.event_id = request.form.get("event_id", type=int) or None
         item.published = request.form.get("published") == "on"
+        
+        image_file = request.files.get("image_file")
+        if image_file and image_file.filename:
+            try:
+                item.image_url = _upload_merchandise_image_to_supabase(image_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_merchandise_edit", item_id=item_id))
+        
         db.session.commit()
         flash("Merchandise updated successfully.", "success")
         return redirect(url_for("admin_merchandise"))
