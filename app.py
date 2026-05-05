@@ -697,7 +697,11 @@ def post_detail(post_id):
 @app.route("/admin/events")
 @admin_required
 def admin_events():
-    events_list = Event.query.order_by(Event.event_date.desc()).all()
+    try:
+        events_list = Event.query.order_by(Event.event_date.desc()).all()
+    except Exception as e:
+        print(f"Failed to load admin events: {e}")
+        events_list = []
     return render_template("admin_events.html", events=events_list)
 
 
@@ -787,7 +791,11 @@ def admin_events_delete(event_id):
 @app.route("/admin/sponsors")
 @admin_required
 def admin_sponsors():
-    sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
+    try:
+        sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
+    except Exception as e:
+        print(f"Failed to load admin sponsors: {e}")
+        sponsors_list = []
     return render_template("admin_sponsors.html", sponsors=sponsors_list)
 
 
@@ -873,7 +881,11 @@ def admin_sponsors_delete(sponsor_id):
 @app.route("/admin/partnerships")
 @admin_required
 def admin_partnerships():
-    plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
+    try:
+        plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
+    except Exception as e:
+        print(f"Failed to load admin partnerships: {e}")
+        plans = []
     return render_template("admin_partnerships.html", plans=plans)
 
 
@@ -945,7 +957,11 @@ def admin_partnerships_delete(plan_id):
 @app.route("/admin/posts")
 @admin_required
 def admin_posts():
-    posts_list = Post.query.order_by(Post.created_at.desc()).all()
+    try:
+        posts_list = Post.query.order_by(Post.created_at.desc()).all()
+    except Exception as e:
+        print(f"Failed to load admin posts: {e}")
+        posts_list = []
     return render_template("admin_posts.html", posts=posts_list)
 
 
@@ -1043,7 +1059,11 @@ def admin_posts_delete(post_id):
 @app.route("/admin/submissions")
 @admin_required
 def admin_submissions():
-    submissions = Submission.query.order_by(Submission.id.desc()).all()
+    try:
+        submissions = Submission.query.order_by(Submission.id.desc()).all()
+    except Exception as e:
+        print(f"Failed to load admin submissions: {e}")
+        submissions = []
     return render_template("admin_submissions.html", submissions=submissions)
 
 
@@ -1061,7 +1081,11 @@ def admin_submissions_delete(submission_id):
 @app.route("/admin/testimonials")
 @admin_required
 def admin_testimonials():
-    testimonials = Testimonial.query.order_by(Testimonial.id.desc()).all()
+    try:
+        testimonials = Testimonial.query.order_by(Testimonial.id.desc()).all()
+    except Exception as e:
+        print(f"Failed to load admin testimonials: {e}")
+        testimonials = []
     return render_template("admin_testimonials.html", testimonials=testimonials)
 
 
@@ -1142,7 +1166,11 @@ def admin_testimonials_delete(testimonial_id):
 @app.route("/admin/faqs")
 @admin_required
 def admin_faqs():
-    faqs = FAQ.query.order_by(FAQ.event_id.asc(), FAQ.order.asc()).all()
+    try:
+        faqs = FAQ.query.order_by(FAQ.event_id.asc(), FAQ.order.asc()).all()
+    except Exception as e:
+        print(f"Failed to load admin faqs: {e}")
+        faqs = []
     return render_template("admin_faqs.html", faqs=faqs)
 
 
@@ -1207,7 +1235,11 @@ def admin_faqs_delete(faq_id):
 @app.route("/admin/merchandise")
 @admin_required
 def admin_merchandise():
-    merchandise = Merchandise.query.order_by(Merchandise.id.desc()).all()
+    try:
+        merchandise = Merchandise.query.order_by(Merchandise.id.desc()).all()
+    except Exception as e:
+        print(f"Failed to load admin merchandise: {e}")
+        merchandise = []
     return render_template("admin_merchandise.html", merchandise=merchandise)
 
 
@@ -1277,7 +1309,11 @@ def admin_merchandise_delete(item_id):
 @app.route("/admin/videos")
 @admin_required
 def admin_videos():
-    videos = Video.query.order_by(Video.id.desc()).all()
+    try:
+        videos = Video.query.order_by(Video.id.desc()).all()
+    except Exception as e:
+        print(f"Failed to load admin videos: {e}")
+        videos = []
     return render_template("admin_videos.html", videos=videos)
 
 
