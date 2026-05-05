@@ -258,6 +258,9 @@ def init_db():
         db.create_all()
         _ensure_event_flyer_column()
         _ensure_merchandise_event_id_column()
+        _ensure_testimonials_event_id_column()
+        _ensure_faqs_event_id_column()
+        _ensure_videos_event_id_column()
 
 
 def _ensure_event_flyer_column():
@@ -282,6 +285,48 @@ def _ensure_merchandise_event_id_column():
             print("Added event_id column to merchandise table")
     except Exception as e:
         print(f"Migration: Could not add event_id to merchandise: {e}")
+
+
+def _ensure_testimonials_event_id_column():
+    """Add event_id to existing testimonials tables if needed."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("testimonials")}
+
+        if "event_id" not in columns:
+            db.session.execute(text("ALTER TABLE testimonials ADD COLUMN event_id INTEGER REFERENCES events(id)"))
+            db.session.commit()
+            print("Added event_id column to testimonials table")
+    except Exception as e:
+        print(f"Migration: Could not add event_id to testimonials: {e}")
+
+
+def _ensure_faqs_event_id_column():
+    """Add event_id to existing faqs tables if needed."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("faqs")}
+
+        if "event_id" not in columns:
+            db.session.execute(text("ALTER TABLE faqs ADD COLUMN event_id INTEGER REFERENCES events(id)"))
+            db.session.commit()
+            print("Added event_id column to faqs table")
+    except Exception as e:
+        print(f"Migration: Could not add event_id to faqs: {e}")
+
+
+def _ensure_videos_event_id_column():
+    """Add event_id to existing videos tables if needed."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("videos")}
+
+        if "event_id" not in columns:
+            db.session.execute(text("ALTER TABLE videos ADD COLUMN event_id INTEGER REFERENCES events(id)"))
+            db.session.commit()
+            print("Added event_id column to videos table")
+    except Exception as e:
+        print(f"Migration: Could not add event_id to videos: {e}")
 
 
 
