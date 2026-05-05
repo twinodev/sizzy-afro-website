@@ -86,10 +86,14 @@
         <nav id="desktop-nav" class="hidden lg:flex items-center gap-1 sm:gap-2 text-sm sm:text-base rounded-full p-1 bg-white/5 border border-white/10">
           <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
           <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
-          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_detail' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('videos') }}" class="nav-link {% if request.endpoint == 'videos' %}active-link{% endif %}">Videos</a>
           <a href="{{ url_for('posts') }}" class="nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
+          <a href="{{ url_for('testimonials_page') }}" class="nav-link {% if request.endpoint == 'testimonials_page' %}active-link{% endif %}">Testimonials</a>
+          <a href="{{ url_for('merchandise') }}" class="nav-link {% if request.endpoint == 'merchandise' %}active-link{% endif %}">Shop</a>
           <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
           <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
+          <a href="{{ url_for('community') }}" class="nav-link {% if request.endpoint == 'community' %}active-link{% endif %}">Community</a>
           <a href="{{ url_for('contact') }}" class="nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
         </nav>
       </div>
@@ -98,10 +102,14 @@
         <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
           <a href="{{ url_for('home') }}" class="mobile-nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
           <a href="{{ url_for('about') }}" class="mobile-nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
-          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_detail' %}active-link{% endif %}">Events</a>
+          <a href="{{ url_for('videos') }}" class="mobile-nav-link {% if request.endpoint == 'videos' %}active-link{% endif %}">Videos</a>
           <a href="{{ url_for('posts') }}" class="mobile-nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
+          <a href="{{ url_for('testimonials_page') }}" class="mobile-nav-link {% if request.endpoint == 'testimonials_page' %}active-link{% endif %}">Testimonials</a>
+          <a href="{{ url_for('merchandise') }}" class="mobile-nav-link {% if request.endpoint == 'merchandise' %}active-link{% endif %}">Shop</a>
           <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
           <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
+          <a href="{{ url_for('community') }}" class="mobile-nav-link {% if request.endpoint == 'community' %}active-link{% endif %}">Community</a>
           <a href="{{ url_for('contact') }}" class="mobile-nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
         </div>
       </nav>

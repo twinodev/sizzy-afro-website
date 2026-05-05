@@ -606,6 +606,30 @@ def videos():
     return render_template('videos.html', featured=featured_list, videos=videos_pagination, categories=categories, current_category=current_category)
 
 
+@app.route("/merchandise")
+def merchandise():
+    page = request.args.get("page", 1, type=int)
+    current_category = request.args.get("category")
+
+    try:
+        q = Merchandise.query.filter_by(published=True)
+
+        # Featured items (most recent)
+        featured_list = q.order_by(Merchandise.created_at.desc()).limit(4).all()
+
+        # Paginate main list
+        products_pagination = q.order_by(Merchandise.created_at.desc()).paginate(page=page, per_page=12, error_out=False)
+
+        categories = []
+    except Exception as e:
+        print(f"Failed to load merchandise: {e}")
+        featured_list = []
+        products_pagination = type('P', (), {'items': [], 'pages': 0, 'has_prev': False, 'has_next': False, 'page': 1, 'prev_num': None, 'next_num': None, 'iter_pages': lambda self: []})()
+        categories = []
+
+    return render_template('merchandise.html', featured=featured_list, products=products_pagination, categories=categories, current_category=current_category)
+
+
 @app.route("/sponsors")
 def sponsors():
     sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
