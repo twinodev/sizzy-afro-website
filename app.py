@@ -558,6 +558,54 @@ def event_detail(event_id):
     )
 
 
+@app.route("/videos")
+def videos():
+    page = request.args.get("page", 1, type=int)
+    current_category = request.args.get("category")
+
+    try:
+        q = Video.query.filter_by(published=True)
+
+        # Featured videos (most recent)
+        featured_list = q.order_by(Video.created_at.desc()).limit(3).all()
+
+        # Paginate main list
+        videos_pagination = q.order_by(Video.created_at.desc()).paginate(page=page, per_page=9, error_out=False)
+
+        # Helper to extract YouTube ID from common URL forms
+        def extract_youtube_id(url):
+            if not url:
+                return None
+            try:
+                parsed = urlparse(url)
+                if parsed.netloc.endswith('youtu.be'):
+                    return parsed.path.lstrip('/')
+                qs = dict(parse_qsl(parsed.query))
+                if 'v' in qs:
+                    return qs['v']
+                parts = parsed.path.split('/')
+                if parts:
+                    return parts[-1]
+            except Exception:
+                return None
+            return None
+
+        # Attach youtube_id attribute for template convenience
+        for v in featured_list:
+            setattr(v, 'youtube_id', extract_youtube_id(v.url) or '')
+        for v in videos_pagination.items:
+            setattr(v, 'youtube_id', extract_youtube_id(v.url) or '')
+
+        categories = []
+    except Exception as e:
+        print(f"Failed to load videos: {e}")
+        featured_list = []
+        videos_pagination = type('P', (), {'items': [], 'pages': 0, 'has_prev': False, 'has_next': False, 'page': 1, 'prev_num': None, 'next_num': None, 'iter_pages': lambda self: []})()
+        categories = []
+
+    return render_template('videos.html', featured=featured_list, videos=videos_pagination, categories=categories, current_category=current_category)
+
+
 @app.route("/sponsors")
 def sponsors():
     sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
@@ -991,6 +1039,20 @@ def admin_submissions_delete(submission_id):
 def admin_testimonials():
     testimonials = Testimonial.query.order_by(Testimonial.id.desc()).all()
     return render_template("admin_testimonials.html", testimonials=testimonials)
+
+
+# Public testimonials page
+@app.route("/testimonials")
+def testimonials_page():
+    try:
+        testimonials_list = Testimonial.query.filter_by(published=True).order_by(Testimonial.created_at.desc()).all()
+    except Exception as e:
+        print(f"Failed to load testimonials: {e}")
+        testimonials_list = []
+    # Split featured (first 2) from the rest for the template
+    featured = testimonials_list[:2]
+    others = testimonials_list[2:]
+    return render_template("testimonials.html", testimonials=others, featured=featured)
 
 
 @app.route("/admin/testimonials/create", methods=["GET", "POST"])
