@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, Response, flash, redirect, render_template, request, session, url_for
 from types import SimpleNamespace
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
@@ -431,6 +431,140 @@ def send_notification_email(subject, body):
     return False
 
 
+def _site_url():
+    configured = os.getenv("SITE_URL", "").strip().rstrip("/")
+    if configured:
+        return configured
+    try:
+        return request.url_root.rstrip("/")
+    except RuntimeError:
+        return ""
+
+
+def _absolute_url(path_or_url):
+    if not path_or_url:
+        return ""
+    if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
+        return path_or_url
+    base = _site_url()
+    if not base:
+        return path_or_url
+    if path_or_url.startswith("/"):
+        return f"{base}{path_or_url}"
+    return f"{base}/{path_or_url}"
+
+
+def _clean_canonical_url(url_value):
+    parsed = urlparse(url_value)
+    filtered_query = urlencode(
+        [
+            (k, v)
+            for k, v in parse_qsl(parsed.query, keep_blank_values=True)
+            if not k.lower().startswith("utm_") and k.lower() not in {"gclid", "fbclid"}
+        ],
+        doseq=True,
+    )
+    return urlunparse(parsed._replace(query=filtered_query, fragment=""))
+
+
+def _truncate_text(value, length=160):
+    if not value:
+        return ""
+    compact = " ".join(str(value).split())
+    if len(compact) <= length:
+        return compact
+    return compact[: length - 1].rstrip() + "…"
+
+
+def _default_seo_for_request():
+    endpoint = request.endpoint or ""
+    is_admin = endpoint.startswith("admin")
+
+    title_map = {
+        "home": "Dance with Sizzy Afro | Afro Dance Classes, Events, Community",
+        "about": "Profile | Dance with Sizzy Afro",
+        "community": "Community | Dance with Sizzy Afro",
+        "contact": "Contact and Bookings | Dance with Sizzy Afro",
+        "events": "Afro Dance Events | Dance with Sizzy Afro",
+        "event_detail": "Event Details | Dance with Sizzy Afro",
+        "videos": "Afro Dance Videos | Dance with Sizzy Afro",
+        "merchandise": "Merchandise | Dance with Sizzy Afro",
+        "sponsors": "Sponsors | Dance with Sizzy Afro",
+        "partnerships": "Partnership Opportunities | Dance with Sizzy Afro",
+        "posts": "Dance Blog Posts | Dance with Sizzy Afro",
+        "post_detail": "Post | Dance with Sizzy Afro",
+        "testimonials_page": "Testimonials | Dance with Sizzy Afro",
+        "submit_testimonial": "Share Your Testimonial | Dance with Sizzy Afro",
+    }
+
+    description_map = {
+        "home": "Join Dance with Sizzy Afro for Afro dance classes, live events, performances, and community-led movement experiences.",
+        "about": "Meet Sizzy Afro and explore the dance journey, mission, and creative profile behind the movement.",
+        "community": "Connect with the Dance with Sizzy Afro community through workshops, challenges, and collaborations.",
+        "contact": "Book classes, performances, and collaborations with Dance with Sizzy Afro.",
+        "events": "Discover upcoming Afro dance events, workshops, and live performances.",
+        "videos": "Watch featured Afro dance videos, choreography, and performance highlights.",
+        "merchandise": "Shop official Dance with Sizzy Afro merchandise and dance-inspired products.",
+        "sponsors": "Explore sponsors and supporters powering Dance with Sizzy Afro experiences.",
+        "partnerships": "Partner with Dance with Sizzy Afro through curated sponsorship and collaboration plans.",
+        "posts": "Read dance stories, updates, and tips from Dance with Sizzy Afro.",
+        "post_detail": "Read the latest dance insights and updates from Dance with Sizzy Afro.",
+        "testimonials_page": "See testimonials from dancers and community members.",
+        "submit_testimonial": "Share your Dance with Sizzy Afro experience.",
+    }
+
+    page_url = _clean_canonical_url(request.url)
+    default_image = _absolute_url(url_for("static", filename="images/hero.jpg"))
+    site_name = "Dance with Sizzy Afro"
+
+    seo = {
+        "title": title_map.get(endpoint, f"{site_name} | Afro Dance"),
+        "description": description_map.get(
+            endpoint,
+            "Dance with Sizzy Afro brings Afro dance classes, creative performances, and vibrant community culture together.",
+        ),
+        "canonical_url": page_url,
+        "robots": "noindex, nofollow" if is_admin else "index, follow, max-image-preview:large",
+        "og_type": "website",
+        "og_image": default_image,
+        "twitter_card": "summary_large_image",
+        "keywords": "Afro dance, dance classes, dance events, choreography, Sizzy Afro",
+        "site_name": site_name,
+        "json_ld": [
+            {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": site_name,
+                "url": _site_url(),
+                "logo": _absolute_url(url_for("static", filename="images/logo.png")),
+                "sameAs": [
+                    "https://instagram.com/sizzyafro",
+                    "https://tiktok.com/@sizzyafro",
+                    "https://youtube.com/@sizzyafro",
+                ],
+            },
+            {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": site_name,
+                "url": _site_url(),
+            },
+        ],
+    }
+
+    if endpoint in {"post_detail", "event_detail"}:
+        seo["og_type"] = "article"
+
+    return seo
+
+
+@app.context_processor
+def inject_seo_context():
+    return {
+        "seo_defaults": _default_seo_for_request(),
+    }
+
+
 @app.route("/")
 def home():
     # Show latest published posts on home page
@@ -614,6 +748,40 @@ def event_detail(event_id):
     except Exception:
         pass
 
+    event_description = _truncate_text(
+        event.description
+        or f"Join {event.title} with Dance with Sizzy Afro at {event.location or 'our next venue'}."
+    )
+
+    seo = {
+        "title": f"{event.title} | Dance with Sizzy Afro",
+        "description": event_description,
+        "og_type": "event",
+        "og_image": _absolute_url(event.flyer_url) if event.flyer_url else _absolute_url(url_for("static", filename="images/hero.jpg")),
+        "json_ld": [
+            {
+                "@context": "https://schema.org",
+                "@type": "Event",
+                "name": event.title,
+                "description": event_description,
+                "startDate": event.event_date,
+                "location": {
+                    "@type": "Place",
+                    "name": event.location or "Venue To Be Announced",
+                },
+                "image": [
+                    _absolute_url(event.flyer_url) if event.flyer_url else _absolute_url(url_for("static", filename="images/hero.jpg"))
+                ],
+                "organizer": {
+                    "@type": "Organization",
+                    "name": "Dance with Sizzy Afro",
+                    "url": _site_url(),
+                },
+                "url": _clean_canonical_url(request.url),
+            }
+        ],
+    }
+
     return render_template(
         "event_detail.html",
         event=event,
@@ -621,6 +789,7 @@ def event_detail(event_id):
         faqs=faqs,
         merchandise=merchandise,
         videos=videos,
+        seo=seo,
     )
 
 
@@ -756,7 +925,123 @@ def post_detail(post_id):
 
     related_posts = Post.query.filter(Post.published == True, Post.id != post_id).order_by(Post.created_at.desc()).limit(3).all()
     comments = Comment.query.filter_by(post_id=post.id, approved=True).order_by(Comment.id.asc()).all()
-    return render_template("post_detail.html", post=post, related_posts=related_posts, comments=comments)
+    post_description = _truncate_text(post.excerpt or post.content)
+    post_image = _absolute_url(post.image_url) if post.image_url else _absolute_url(url_for("static", filename="images/hero.jpg"))
+    seo = {
+        "title": f"{post.title} | Dance with Sizzy Afro",
+        "description": post_description,
+        "og_type": "article",
+        "og_image": post_image,
+        "json_ld": [
+            {
+                "@context": "https://schema.org",
+                "@type": "BlogPosting",
+                "headline": post.title,
+                "description": post_description,
+                "image": [post_image],
+                "datePublished": post.created_at,
+                "dateModified": post.updated_at or post.created_at,
+                "author": {
+                    "@type": "Organization",
+                    "name": "Dance with Sizzy Afro",
+                },
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Dance with Sizzy Afro",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": _absolute_url(url_for("static", filename="images/logo.png")),
+                    },
+                },
+                "mainEntityOfPage": _clean_canonical_url(request.url),
+            }
+        ],
+    }
+    return render_template("post_detail.html", post=post, related_posts=related_posts, comments=comments, seo=seo)
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        f"Sitemap: {_absolute_url(url_for('sitemap_xml'))}",
+    ]
+    return Response("\n".join(lines), mimetype="text/plain")
+
+
+def _safe_lastmod(value):
+    if not value:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(str(value), fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    urls = []
+
+    static_endpoints = [
+        "home",
+        "about",
+        "community",
+        "contact",
+        "events",
+        "videos",
+        "merchandise",
+        "sponsors",
+        "partnerships",
+        "posts",
+        "testimonials_page",
+        "submit_testimonial",
+    ]
+
+    for endpoint in static_endpoints:
+        try:
+            urls.append({"loc": _absolute_url(url_for(endpoint)), "lastmod": None})
+        except Exception:
+            continue
+
+    try:
+        for event in Event.query.order_by(Event.id.desc()).all():
+            urls.append(
+                {
+                    "loc": _absolute_url(url_for("event_detail", event_id=event.id)),
+                    "lastmod": _safe_lastmod(event.created_at),
+                }
+            )
+    except Exception as e:
+        print(f"Sitemap events generation failed: {e}")
+
+    try:
+        for post in Post.query.filter_by(published=True).order_by(Post.id.desc()).all():
+            urls.append(
+                {
+                    "loc": _absolute_url(url_for("post_detail", post_id=post.id)),
+                    "lastmod": _safe_lastmod(post.updated_at or post.created_at),
+                }
+            )
+    except Exception as e:
+        print(f"Sitemap posts generation failed: {e}")
+
+    xml_rows = [
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+        "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">",
+    ]
+    for item in urls:
+        xml_rows.append("  <url>")
+        xml_rows.append(f"    <loc>{item['loc']}</loc>")
+        if item.get("lastmod"):
+            xml_rows.append(f"    <lastmod>{item['lastmod']}</lastmod>")
+        xml_rows.append("  </url>")
+    xml_rows.append("</urlset>")
+
+    return Response("\n".join(xml_rows), mimetype="application/xml")
 
 
 # Admin Events Management
@@ -1177,6 +1462,33 @@ def testimonials_page():
     featured = testimonials_list[:2]
     others = testimonials_list[2:]
     return render_template("testimonials.html", testimonials=others, featured=featured)
+
+
+@app.route("/testimonials/submit", methods=["GET", "POST"])
+def submit_testimonial():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        role = request.form.get("role", "").strip()
+        content = request.form.get("content", "").strip()
+
+        if not name or not content:
+            flash("Name and testimonial are required.", "error")
+            return redirect(url_for("submit_testimonial"))
+
+        testimonial = Testimonial(
+            name=name,
+            title=role or None,
+            message=content,
+            published=False,
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        db.session.add(testimonial)
+        db.session.commit()
+
+        flash("Thanks for sharing your experience. Your testimonial will be reviewed soon.", "success")
+        return redirect(url_for("testimonials_page"))
+
+    return render_template("testimonial_form.html")
 
 
 @app.route("/admin/testimonials/create", methods=["GET", "POST"])

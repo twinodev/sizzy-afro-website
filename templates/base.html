@@ -1,11 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    {% set seo_meta = seo_defaults.copy() %}
+    {% if seo is defined and seo %}
+      {% set _ = seo_meta.update(seo) %}
+    {% endif %}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Dance with Sizzy Afro{% endblock %}</title>
+    <title>{% block title %}{{ seo_meta.title }}{% endblock %}</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}" />
-    <meta name="description" content="Dance with Sizzy Afro — Afro dance classes, performances, and community experiences." />
+    <meta name="description" content="{{ seo_meta.description }}" />
+    <meta name="keywords" content="{{ seo_meta.keywords }}" />
+    <meta name="robots" content="{{ seo_meta.robots }}" />
+    <link rel="canonical" href="{{ seo_meta.canonical_url }}" />
+
+    <meta property="og:site_name" content="{{ seo_meta.site_name }}" />
+    <meta property="og:type" content="{{ seo_meta.og_type }}" />
+    <meta property="og:title" content="{{ seo_meta.title }}" />
+    <meta property="og:description" content="{{ seo_meta.description }}" />
+    <meta property="og:url" content="{{ seo_meta.canonical_url }}" />
+    <meta property="og:image" content="{{ seo_meta.og_image }}" />
+
+    <meta name="twitter:card" content="{{ seo_meta.twitter_card }}" />
+    <meta name="twitter:title" content="{{ seo_meta.title }}" />
+    <meta name="twitter:description" content="{{ seo_meta.description }}" />
+    <meta name="twitter:image" content="{{ seo_meta.og_image }}" />
+
+    {% if seo_meta.json_ld %}
+      {% for schema_item in seo_meta.json_ld %}
+        <script type="application/ld+json">{{ schema_item | tojson }}</script>
+      {% endfor %}
+    {% endif %}
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
