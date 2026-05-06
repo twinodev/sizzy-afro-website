@@ -692,12 +692,35 @@ def admin_logout():
 @app.route("/admin")
 @admin_required
 def admin_dashboard():
-    submissions = Submission.query.order_by(Submission.id.desc()).all()
-    total_submissions = Submission.query.count()
-    total_events = Event.query.count()
-    total_posts = Post.query.count()
-    total_sponsors = Sponsor.query.count()
-    total_plans = PartnershipPlan.query.count()
+    try:
+        submissions = Submission.query.order_by(Submission.id.desc()).all()
+    except Exception:
+        submissions = []
+    
+    try:
+        total_submissions = Submission.query.count()
+    except Exception:
+        total_submissions = 0
+    
+    try:
+        total_events = Event.query.count()
+    except Exception:
+        total_events = 0
+    
+    try:
+        total_posts = Post.query.count()
+    except Exception:
+        total_posts = 0
+    
+    try:
+        total_sponsors = Sponsor.query.count()
+    except Exception:
+        total_sponsors = 0
+    
+    try:
+        total_plans = PartnershipPlan.query.count()
+    except Exception:
+        total_plans = 0
 
     return render_template(
         "admin_dashboard.html",
@@ -1517,7 +1540,11 @@ def admin_testimonials_create():
         flash("Testimonial created successfully.", "success")
         return redirect(url_for("admin_testimonials"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_testimonials_form.html", testimonial=None, events=events)
 
 
@@ -1536,7 +1563,11 @@ def admin_testimonials_edit(testimonial_id):
         flash("Testimonial updated successfully.", "success")
         return redirect(url_for("admin_testimonials"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_testimonials_form.html", testimonial=testimonial, events=events)
 
 
@@ -1587,7 +1618,11 @@ def admin_faqs_create():
         flash("FAQ created successfully.", "success")
         return redirect(url_for("admin_faqs"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_faqs_form.html", faq=None, events=events)
 
 
@@ -1605,7 +1640,11 @@ def admin_faqs_edit(faq_id):
         flash("FAQ updated successfully.", "success")
         return redirect(url_for("admin_faqs"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_faqs_form.html", faq=faq, events=events)
 
 
@@ -1673,7 +1712,11 @@ def admin_merchandise_create():
         flash("Merchandise created successfully.", "success")
         return redirect(url_for("admin_merchandise"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_merchandise_form.html", item=None, events=events)
 
 
@@ -1703,7 +1746,11 @@ def admin_merchandise_edit(item_id):
         flash("Merchandise updated successfully.", "success")
         return redirect(url_for("admin_merchandise"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_merchandise_form.html", item=item, events=events)
 
 
@@ -1760,7 +1807,11 @@ def admin_videos_create():
         flash("Video created successfully.", "success")
         return redirect(url_for("admin_videos"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_videos_form.html", video=None, events=events)
 
 
@@ -1781,7 +1832,11 @@ def admin_videos_edit(video_id):
         flash("Video updated successfully.", "success")
         return redirect(url_for("admin_videos"))
     
-    events = Event.query.all()
+    try:
+        events = Event.query.all()
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        events = []
     return render_template("admin_videos_form.html", video=video, events=events)
 
 
