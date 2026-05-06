@@ -259,9 +259,25 @@ def init_db():
         db.create_all()
         _ensure_event_flyer_column()
         _ensure_merchandise_event_id_column()
+        _ensure_merchandise_published_column()
         _ensure_testimonials_event_id_column()
         _ensure_faqs_event_id_column()
         _ensure_videos_event_id_column()
+
+
+def _ensure_merchandise_published_column():
+    """Add published boolean column to merchandise if missing."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("merchandise")}
+
+        if "published" not in columns:
+            # Add column with default True so existing records are treated as published
+            db.session.execute(text("ALTER TABLE merchandise ADD COLUMN published BOOLEAN DEFAULT true"))
+            db.session.commit()
+            print("Added published column to merchandise table")
+    except Exception as e:
+        print(f"Migration: Could not add published to merchandise: {e}")
 
 
 def _ensure_event_flyer_column():
