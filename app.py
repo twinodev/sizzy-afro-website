@@ -890,13 +890,21 @@ def merchandise():
 
 @app.route("/sponsors")
 def sponsors():
-    sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
+    try:
+        sponsors_list = Sponsor.query.order_by(Sponsor.tier.desc(), Sponsor.name.asc()).all()
+    except Exception as e:
+        print(f"Failed to load sponsors: {e}")
+        sponsors_list = []
     return render_template("sponsors.html", sponsors=sponsors_list)
 
 
 @app.route("/partnerships")
 def partnerships():
-    plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
+    try:
+        plans = PartnershipPlan.query.order_by(PartnershipPlan.id.asc()).all()
+    except Exception as e:
+        print(f"Failed to load partnerships: {e}")
+        plans = []
     return render_template("partnerships.html", plans=plans)
 
 
