@@ -1417,7 +1417,8 @@ def admin_posts_edit(post_id):
         post.content = content
         post.excerpt = excerpt or None
         post.image_url = image_url or None
-        post.published = published
+        if _table_has_column("posts", "published"):
+            post.published = published
         post.updated_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         db.session.commit()
 
@@ -1566,7 +1567,8 @@ def admin_testimonials_edit(testimonial_id):
         testimonial.title = request.form.get("title", "").strip() or None
         testimonial.message = request.form.get("message", "").strip()
         testimonial.event_id = request.form.get("event_id", type=int) or None
-        testimonial.published = request.form.get("published") == "on"
+        if _table_has_column("testimonials", "published"):
+            testimonial.published = request.form.get("published") == "on"
         db.session.commit()
         flash("Testimonial updated successfully.", "success")
         return redirect(url_for("admin_testimonials"))
@@ -1707,12 +1709,15 @@ def admin_merchandise_create():
             "image_url": image_url,
             "price": price or None,
             "purchase_url": purchase_url or None,
-            "published": True,
             "created_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         if _table_has_column("merchandise", "event_id"):
             merch_kwargs["event_id"] = event_id
+
+        # Only include `published` if the column exists in the DB (safer for older schemas)
+        if _table_has_column("merchandise", "published"):
+            merch_kwargs["published"] = True
 
         merchandise = Merchandise(**merch_kwargs)
         db.session.add(merchandise)
@@ -1740,7 +1745,10 @@ def admin_merchandise_edit(item_id):
         item.purchase_url = request.form.get("purchase_url", "").strip() or None
         if _table_has_column("merchandise", "event_id"):
             item.event_id = request.form.get("event_id", type=int) or None
-        item.published = request.form.get("published") == "on"
+        # Only set published if the column exists
+        if _table_has_column("merchandise", "published"):
+                if _table_has_column("merchandise", "published"):
+                    item.published = request.form.get("published") == "on"
         
         image_file = request.files.get("image_file")
         if image_file and image_file.filename:
@@ -1803,11 +1811,12 @@ def admin_videos_create():
             "description": description or None,
             "url": url,
             "thumbnail_url": thumbnail_url or None,
-            "published": True,
             "created_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         }
         if _table_has_column("videos", "event_id"):
             video_kwargs["event_id"] = event_id
+        if _table_has_column("videos", "published"):
+            video_kwargs["published"] = True
 
         video = Video(**video_kwargs)
         db.session.add(video)
@@ -1835,7 +1844,8 @@ def admin_videos_edit(video_id):
         video.thumbnail_url = request.form.get("thumbnail_url", "").strip() or None
         if _table_has_column("videos", "event_id"):
             video.event_id = request.form.get("event_id", type=int) or None
-        video.published = request.form.get("published") == "on"
+        if _table_has_column("videos", "published"):
+            video.published = request.form.get("published") == "on"
         db.session.commit()
         flash("Video updated successfully.", "success")
         return redirect(url_for("admin_videos"))
