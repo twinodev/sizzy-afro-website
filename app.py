@@ -2,6 +2,7 @@ import os
 import re
 import mimetypes
 import uuid
+from hmac import compare_digest
 from datetime import datetime
 from functools import wraps
 from urllib.error import HTTPError, URLError
@@ -14,7 +15,20 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "dance-with-sizzy-afro"
+
+
+def _required_secret_key():
+    secret_key = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY")
+    if secret_key:
+        return secret_key
+
+    if os.getenv("FLASK_ENV", "development").lower() == "production":
+        raise RuntimeError("SECRET_KEY or FLASK_SECRET_KEY must be set in production.")
+
+    return "dev-only-change-this-secret"
+
+
+app.config["SECRET_KEY"] = _required_secret_key()
 
 
 def _clean_database_url(raw_value):
@@ -93,12 +107,13 @@ app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
 app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@gmail.com")
-app.config["MAIL_SUPPRESS_SEND"] = True  # Disable actual sending during development
+app.config["MAIL_SUPPRESS_SEND"] = os.getenv("MAIL_SUPPRESS_SEND", "False").lower() in {"1", "true", "yes", "on"}
 app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
 app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 app.config["SUPABASE_FLYER_BUCKET"] = os.getenv("SUPABASE_FLYER_BUCKET", "event-flyers")
 app.config["SUPABASE_LOGO_BUCKET"] = os.getenv("SUPABASE_LOGO_BUCKET", "sponsor-logos")
 app.config["SUPABASE_POST_BUCKET"] = os.getenv("SUPABASE_POST_BUCKET", "post-images")
+app.config["SUPABASE_GALLERY_BUCKET"] = os.getenv("SUPABASE_GALLERY_BUCKET", app.config["SUPABASE_POST_BUCKET"])
 
 # Initialize mail lazily
 mail = None
@@ -251,6 +266,19 @@ class SocialLink(db.Model):
     platform = db.Column(db.String(50), nullable=False)
     url = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.String(50), nullable=False)
+
+
+class PageView(db.Model):
+    """Track page views and user interactions for analytics."""
+    __tablename__ = "page_views"
+    id = db.Column(db.Integer, primary_key=True)
+    endpoint = db.Column(db.String(255), nullable=False)  # e.g., 'home', 'events', 'contact'
+    path = db.Column(db.String(500), nullable=False)  # e.g., '/events/5'
+    method = db.Column(db.String(10), default="GET")  # GET, POST, etc.
+    user_agent = db.Column(db.Text)  # Browser info
+    referrer = db.Column(db.String(500))  # Where user came from
+    ip_address = db.Column(db.String(50))  # Client IP
+    created_at = db.Column(db.String(50), nullable=False)  # Timestamp
 
 
 def init_db():
@@ -414,6 +442,10 @@ def _upload_post_image_to_supabase(file_storage):
     return _upload_image_to_supabase(file_storage, app.config["SUPABASE_POST_BUCKET"], "posts", "post image")
 
 
+def _upload_gallery_image_to_supabase(file_storage):
+    return _upload_image_to_supabase(file_storage, app.config["SUPABASE_GALLERY_BUCKET"], "gallery", "gallery")
+
+
 def _upload_merchandise_image_to_supabase(file_storage):
     return _upload_image_to_supabase(file_storage, app.config["SUPABASE_POST_BUCKET"], "merchandise", "merchandise image")
 
@@ -574,6 +606,37 @@ def _default_seo_for_request():
     return seo
 
 
+def _get_client_ip():
+    """Get the client IP address from request."""
+    if request.environ.get('HTTP_X_FORWARDED_FOR'):
+        return request.environ['HTTP_X_FORWARDED_FOR'].split(',')[0].strip()
+    return request.environ.get('REMOTE_ADDR', 'unknown')
+
+
+@app.before_request
+def track_page_view():
+    """Automatically track page views for analytics."""
+    # Don't track static files, admin panel logins, or internal routes
+    skip_endpoints = {'static', 'admin_login', 'send_test_email'}
+    if request.endpoint and request.endpoint not in skip_endpoints:
+        try:
+            page_view = PageView(
+                endpoint=request.endpoint or 'unknown',
+                path=request.path,
+                method=request.method,
+                user_agent=request.headers.get('User-Agent', '')[:500],
+                referrer=request.headers.get('Referer', '')[:500],
+                ip_address=_get_client_ip(),
+                created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            )
+            db.session.add(page_view)
+            db.session.commit()
+        except Exception as e:
+            # Don't let tracking errors break the app
+            print(f"Failed to track page view: {e}")
+            db.session.rollback()
+
+
 @app.context_processor
 def inject_seo_context():
     return {
@@ -685,9 +748,14 @@ def admin_login():
         password = request.form.get("password", "")
 
         admin_username = os.getenv("ADMIN_USERNAME", "admin")
-        admin_password = os.getenv("ADMIN_PASSWORD", "changeme123")
+        admin_password = os.getenv("ADMIN_PASSWORD")
+        if not admin_password:
+            if os.getenv("FLASK_ENV", "development").lower() == "production":
+                flash("Admin login is not configured. Set ADMIN_PASSWORD.", "error")
+                return render_template("admin_login.html"), 503
+            admin_password = "dev-admin-password"
 
-        if username == admin_username and password == admin_password:
+        if compare_digest(username, admin_username) and compare_digest(password, admin_password):
             session["admin_logged_in"] = True
             flash("Welcome to the admin panel.", "success")
             return redirect(url_for("admin_dashboard"))
@@ -1902,11 +1970,17 @@ def admin_gallery_create():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         category = request.form.get("category", "").strip() or None
-        image_url = request.form.get("image_url", "").strip() or None
+        image_file = request.files.get("image_file")
         featured = request.form.get("featured") == "on"
 
         if not title:
             flash("Title is required.", "error")
+            return redirect(url_for("admin_gallery_create"))
+
+        try:
+            image_url = _upload_gallery_image_to_supabase(image_file)
+        except ValueError as error:
+            flash(str(error), "error")
             return redirect(url_for("admin_gallery_create"))
 
         try:
@@ -1937,8 +2011,14 @@ def admin_gallery_edit(item_id):
     if request.method == "POST":
         item.title = request.form.get("title", "").strip()
         item.category = request.form.get("category", "").strip() or None
-        item.image_url = request.form.get("image_url", "").strip() or None
         item.featured = request.form.get("featured") == "on"
+        image_file = request.files.get("image_file")
+        if image_file and image_file.filename:
+            try:
+                item.image_url = _upload_gallery_image_to_supabase(image_file)
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_gallery_edit", item_id=item_id))
         db.session.commit()
         flash("Gallery item updated.", "success")
         return redirect(url_for("admin_gallery"))
@@ -2159,6 +2239,62 @@ If you received this, your email setup is good to go!
             return {"message": "Failed to send test email. Check your SMTP configuration."}, 400
     except Exception as e:
         return {"message": f"Error: {str(e)}"}, 500
+
+
+# Admin Analytics
+@app.route("/admin/analytics")
+@admin_required
+def admin_analytics():
+    """Display analytics dashboard with key metrics and insights."""
+    try:
+        # Total page views
+        total_views = PageView.query.count()
+        
+        # Most visited pages
+        from sqlalchemy import func
+        popular_pages = db.session.query(
+            PageView.endpoint,
+            PageView.path,
+            func.count(PageView.id).label('views')
+        ).group_by(PageView.endpoint, PageView.path).order_by(
+            func.count(PageView.id).desc()
+        ).limit(10).all()
+        
+        # Recent views (last 100)
+        recent_views = PageView.query.order_by(PageView.created_at.desc()).limit(100).all()
+        
+        # View trends - views by day
+        daily_views = db.session.query(
+            func.substr(PageView.created_at, 1, 10).label('date'),
+            func.count(PageView.id).label('views')
+        ).group_by(func.substr(PageView.created_at, 1, 10)).order_by(
+            func.substr(PageView.created_at, 1, 10).desc()
+        ).limit(30).all()
+        
+        # Top referrers
+        top_referrers = db.session.query(
+            PageView.referrer,
+            func.count(PageView.id).label('count')
+        ).filter(PageView.referrer != '').group_by(PageView.referrer).order_by(
+            func.count(PageView.id).desc()
+        ).limit(10).all()
+        
+    except Exception as e:
+        print(f"Failed to load analytics: {e}")
+        total_views = 0
+        popular_pages = []
+        recent_views = []
+        daily_views = []
+        top_referrers = []
+    
+    return render_template(
+        "admin_analytics.html",
+        total_views=total_views,
+        popular_pages=popular_pages,
+        recent_views=recent_views,
+        daily_views=daily_views,
+        top_referrers=top_referrers,
+    )
 
 
 # Helper: check table columns cache (used to avoid runtime errors on DBs missing columns)

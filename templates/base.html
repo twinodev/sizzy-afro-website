@@ -84,15 +84,14 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Mark body as loaded when Tailwind is ready
+      window.trackEvent = window.trackEvent || function(name, payload) {
+        if (window.console && console.debug) {
+          console.debug('trackEvent', name, payload || {});
+        }
+      };
+
       document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => document.body.classList.add('loaded'), 50);
-      });
-    </script>
-    <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
-    <script type="text/javascript">
-      aclib.runVideoSlider({
-          zoneId: '11278190',
       });
     </script>
 
@@ -148,12 +147,6 @@
 
     <main class="flex-1">
       {% block content %}
-      <script type="text/javascript">
-    aclib.runAutoTag({
-        zoneId: 'ot8gzcm740',
-    });
-  </script>
-
       {% endblock %}
     </main>
 

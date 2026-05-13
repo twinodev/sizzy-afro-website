@@ -12,7 +12,7 @@
 header img[alt*="logo"],
 header img[src*="logo.png"] {
   max-width: 40px !important;
-  maxheight: 40px !important;
+  max-height: 40px !important;
   width: 40px !important;
   height: 40px !important;
 }

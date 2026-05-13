@@ -45,12 +45,22 @@
             
             <div class="mt-auto pt-4 border-t border-white/10 flex items-center justify-between text-xs text-afro-100/60">
               <span>{{ post.created_at[:10] }}</span>
-              <a 
-                href="/posts/{{ post.id }}" 
-                class="text-afro-300 font-semibold hover:text-afro-200 transition-colors"
-              >
-                Read More →
-              </a>
+              <div class="flex items-center gap-3">
+                <a
+                  href="https://wa.me/?text={{ ('Check out this post: ' ~ post.title ~ ' ' ~ request.url_root.rstrip('/') ~ url_for('post_detail', post_id=post.id)) | urlencode }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-afro-300 font-semibold hover:text-afro-200 transition-colors"
+                >
+                  WhatsApp
+                </a>
+                <a 
+                  href="/posts/{{ post.id }}" 
+                  class="text-afro-300 font-semibold hover:text-afro-200 transition-colors"
+                >
+                  Read More →
+                </a>
+              </div>
             </div>
           </div>
         </article>
@@ -62,12 +72,6 @@
     </div>
   {% endif %}
 </div>
-<script type="text/javascript">
-    aclib.runAutoTag({
-        zoneId: 'ot8gzcm740',
-    });
-</script>
-
 <style>
   .section-hero {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);

@@ -53,6 +53,14 @@
         <p class="font-semibold text-white mb-2">Share this post</p>
         <div class="flex gap-3">
           <a 
+            href="https://wa.me/?text={{ ('Check out this post: ' ~ post.title ~ ' ' ~ request.url) | urlencode }}" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="social-link text-xs"
+          >
+            WhatsApp
+          </a>
+          <a 
             href="https://twitter.com/intent/tweet?text={{ post.title }}&url={{ request.url }}" 
             target="_blank" 
             rel="noopener noreferrer"

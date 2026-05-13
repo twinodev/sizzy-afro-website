@@ -15,46 +15,41 @@ A colorful multipage Flask + Tailwind CSS website for the Dance with Sizzy Afro 
 
 1. Install dependencies:
    ```bash
-   /usr/local/bin/python3.13 -m pip install --user -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 
-2. Configure email notifications (optional but recommended):
-   - Copy `.env.example` to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
-   - Edit `.env` and add your email credentials:
-     - For Gmail: Enable "2-Step Verification" then create an "App Password"
-     - Use that app password in `MAIL_PASSWORD`
-     - Set `ADMIN_EMAIL` to where you want to receive notifications
+2. Configure environment variables:
+   - Copy `.env.example` to `.env`.
+   - Set `SECRET_KEY` or `FLASK_SECRET_KEY`.
+   - Set `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+   - Add email credentials if you want contact notifications.
+   - Add Supabase storage credentials if you want image uploads.
 
 3. Start the Flask server:
    ```bash
-   /usr/local/bin/python3.13 app.py
+   python app.py
    ```
 
 4. Open:
    - http://127.0.0.1:5000
 
 ## Admin Panel
-- Login at `/admin/login`
-- Default credentials: `admin` / `changeme123`
-- Change via environment variables: `ADMIN_USERNAME` and `ADMIN_PASSWORD`
+- Login at `/admin/login`.
+- Production deployments must set `ADMIN_PASSWORD`.
+- Do not use shared or easy-to-guess admin credentials.
 
 ## Email Notifications
-When configured, you'll receive email notifications for:
-- New contact form submissions (with name, email, and message)
+When configured, contact form submissions can send notifications to `ADMIN_EMAIL`.
 
-To enable:
-1. Set up environment variables in `.env` file
-2. For Gmail users:
-   - Go to Google Account → Security
-   - Enable 2-Step Verification
-   - Create App Password for "Mail"
-   - Use that password in `.env`
+For Gmail:
+- Go to Google Account > Security.
+- Enable 2-Step Verification.
+- Create an app password for Mail.
+- Use that app password as `MAIL_PASSWORD`.
 
 ## Tech
 - Flask
-- Tailwind CSS (CDN)
-- Flask-Mail (email notifications)
-- SQLite (data storage)
+- Tailwind CSS CDN
+- Flask-Mail
+- Flask-SQLAlchemy
+- PostgreSQL/Supabase-ready storage configuration
