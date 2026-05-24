@@ -10,7 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
-from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for, jsonify
 from types import SimpleNamespace
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
@@ -214,6 +214,7 @@ class Post(db.Model):
     published = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.String(50), nullable=False)
     updated_at = db.Column(db.String(50), nullable=False)
+    likes = db.Column(db.Integer, default=0, nullable=False)
 
 
 class Comment(db.Model):
@@ -225,6 +226,7 @@ class Comment(db.Model):
     message = db.Column(db.Text, nullable=False)
     approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(50), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=True)
 
 
 class Testimonial(db.Model):
@@ -327,6 +329,8 @@ def init_db():
         _ensure_testimonials_event_id_column()
         _ensure_faqs_event_id_column()
         _ensure_videos_event_id_column()
+        _ensure_posts_likes_column()
+        _ensure_comments_parent_id_column()
 
 
 def _ensure_merchandise_published_column():
@@ -408,6 +412,34 @@ def _ensure_videos_event_id_column():
             print("Added event_id column to videos table")
     except Exception as e:
         print(f"Migration: Could not add event_id to videos: {e}")
+
+
+def _ensure_posts_likes_column():
+    """Add likes column to posts if missing."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("posts")}
+
+        if "likes" not in columns:
+            db.session.execute(text("ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0 NOT NULL"))
+            db.session.commit()
+            print("Added likes column to posts table")
+    except Exception as e:
+        print(f"Migration: Could not add likes to posts: {e}")
+
+
+def _ensure_comments_parent_id_column():
+    """Add parent_id column to comments if missing."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("comments")}
+
+        if "parent_id" not in columns:
+            db.session.execute(text("ALTER TABLE comments ADD COLUMN parent_id INTEGER REFERENCES comments(id)"))
+            db.session.commit()
+            print("Added parent_id column to comments table")
+    except Exception as e:
+        print(f"Migration: Could not add parent_id to comments: {e}")
 
 
 
@@ -1052,10 +1084,11 @@ def post_detail(post_id):
         return redirect(url_for("posts"))
 
     if request.method == "POST":
-        # Accept comments on posts
+        # Accept comments on posts (including replies)
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip()
         message = request.form.get("message", "").strip()
+        parent_id = request.form.get("parent_id")
 
         if not name or not email or not message:
             flash("Please provide your name, email, and a comment.", "error")
@@ -1067,7 +1100,8 @@ def post_detail(post_id):
             email=email,
             message=message,
             approved=False,
-            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            parent_id=int(parent_id) if parent_id else None,
         )
         db.session.add(comment)
         db.session.commit()
@@ -1075,7 +1109,22 @@ def post_detail(post_id):
         return redirect(url_for("post_detail", post_id=post_id))
 
     related_posts = Post.query.filter(Post.published == True, Post.id != post_id).order_by(Post.created_at.desc()).limit(3).all()
-    comments = Comment.query.filter_by(post_id=post.id, approved=True).order_by(Comment.id.asc()).all()
+    # Fetch approved comments and assemble nested replies
+    comments_all = Comment.query.filter_by(post_id=post.id, approved=True).order_by(Comment.id.asc()).all()
+    comments_by_id = {c.id: c for c in comments_all}
+    roots = []
+    for c in comments_all:
+        setattr(c, 'replies', [])
+    for c in comments_all:
+        if getattr(c, 'parent_id', None):
+            parent = comments_by_id.get(c.parent_id)
+            if parent:
+                parent.replies.append(c)
+            else:
+                roots.append(c)
+        else:
+            roots.append(c)
+    comments = roots
     post_description = _truncate_text(post.excerpt or post.content)
     post_image = _absolute_url(post.image_url) if post.image_url else _absolute_url(url_for("static", filename="images/hero.jpg"))
     seo = {
@@ -1109,6 +1158,24 @@ def post_detail(post_id):
         ],
     }
     return render_template("post_detail.html", post=post, related_posts=related_posts, comments=comments, seo=seo)
+
+
+@app.route("/posts/<int:post_id>/like", methods=["POST"])
+def post_like(post_id):
+    try:
+        post = Post.query.get_or_404(post_id)
+        post.likes = (post.likes or 0) + 1
+        db.session.commit()
+    except Exception as e:
+        print(f"Like failed for post {post_id}: {e}")
+        if request.is_json:
+            return jsonify({"error": "failed"}), 500
+        flash("Unable to like post.", "error")
+        return redirect(url_for('post_detail', post_id=post_id))
+
+    if request.is_json:
+        return jsonify({"likes": post.likes})
+    return redirect(url_for('post_detail', post_id=post_id))
 
 
 @app.route("/robots.txt")

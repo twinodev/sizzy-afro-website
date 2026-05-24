@@ -115,6 +115,7 @@
     </script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
   </head>
   <body class="bg-stage text-white min-h-screen flex flex-col font-[Manrope] antialiased">
     <div class="site-aura" aria-hidden="true"></div>
@@ -133,33 +134,33 @@
         </button>
 
         <nav id="desktop-nav" class="hidden lg:flex items-center gap-1 sm:gap-2 text-sm sm:text-base rounded-full p-1 bg-white/5 border border-white/10">
-          <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
-          <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
-          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_detail' %}active-link{% endif %}">Events</a>
-          <a href="{{ url_for('videos') }}" class="nav-link {% if request.endpoint == 'videos' %}active-link{% endif %}">Videos</a>
-          <a href="{{ url_for('posts') }}" class="nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
-          <a href="{{ url_for('testimonials_page') }}" class="nav-link {% if request.endpoint == 'testimonials_page' %}active-link{% endif %}">Testimonials</a>
-          <a href="{{ url_for('merchandise') }}" class="nav-link {% if request.endpoint == 'merchandise' %}active-link{% endif %}">Shop</a>
-          <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
-          <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
-          <a href="{{ url_for('community') }}" class="nav-link {% if request.endpoint == 'community' %}active-link{% endif %}">Community</a>
-          <a href="{{ url_for('contact') }}" class="nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
+          <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active-link{% endif %}"><i class="fa fa-home mr-2"></i>Home</a>
+          <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active-link{% endif %}"><i class="fa fa-user mr-2"></i>Profile</a>
+          <a href="{{ url_for('events') }}" class="nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_detail' %}active-link{% endif %}"><i class="fa fa-calendar-alt mr-2"></i>Events</a>
+          <a href="{{ url_for('videos') }}" class="nav-link {% if request.endpoint == 'videos' %}active-link{% endif %}"><i class="fa fa-video mr-2"></i>Videos</a>
+          <a href="{{ url_for('posts') }}" class="nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}"><i class="fa fa-newspaper mr-2"></i>Posts</a>
+          <a href="{{ url_for('testimonials_page') }}" class="nav-link {% if request.endpoint == 'testimonials_page' %}active-link{% endif %}"><i class="fa fa-comment-dots mr-2"></i>Testimonials</a>
+          <a href="{{ url_for('merchandise') }}" class="nav-link {% if request.endpoint == 'merchandise' %}active-link{% endif %}"><i class="fa fa-shopping-bag mr-2"></i>Shop</a>
+          <a href="{{ url_for('sponsors') }}" class="nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}"><i class="fa fa-handshake mr-2"></i>Sponsors</a>
+          <a href="{{ url_for('partnerships') }}" class="nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}"><i class="fa fa-briefcase mr-2"></i>Partner</a>
+          <a href="{{ url_for('community') }}" class="nav-link {% if request.endpoint == 'community' %}active-link{% endif %}"><i class="fa fa-users mr-2"></i>Community</a>
+          <a href="{{ url_for('contact') }}" class="nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}"><i class="fa fa-envelope mr-2"></i>Connect</a>
         </nav>
       </div>
 
       <nav id="mobile-nav" class="lg:hidden hidden border-t border-white/10 bg-stage/95 backdrop-blur">
         <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
-          <a href="{{ url_for('home') }}" class="mobile-nav-link {% if request.endpoint == 'home' %}active-link{% endif %}">Home</a>
-          <a href="{{ url_for('about') }}" class="mobile-nav-link {% if request.endpoint == 'about' %}active-link{% endif %}">Profile</a>
-          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_detail' %}active-link{% endif %}">Events</a>
-          <a href="{{ url_for('videos') }}" class="mobile-nav-link {% if request.endpoint == 'videos' %}active-link{% endif %}">Videos</a>
-          <a href="{{ url_for('posts') }}" class="mobile-nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}">Posts</a>
-          <a href="{{ url_for('testimonials_page') }}" class="mobile-nav-link {% if request.endpoint == 'testimonials_page' %}active-link{% endif %}">Testimonials</a>
-          <a href="{{ url_for('merchandise') }}" class="mobile-nav-link {% if request.endpoint == 'merchandise' %}active-link{% endif %}">Shop</a>
-          <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}">Sponsors</a>
-          <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}">Partner</a>
-          <a href="{{ url_for('community') }}" class="mobile-nav-link {% if request.endpoint == 'community' %}active-link{% endif %}">Community</a>
-          <a href="{{ url_for('contact') }}" class="mobile-nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}">Connect</a>
+          <a href="{{ url_for('home') }}" class="mobile-nav-link {% if request.endpoint == 'home' %}active-link{% endif %}"><i class="fa fa-home mr-2"></i>Home</a>
+          <a href="{{ url_for('about') }}" class="mobile-nav-link {% if request.endpoint == 'about' %}active-link{% endif %}"><i class="fa fa-user mr-2"></i>Profile</a>
+          <a href="{{ url_for('events') }}" class="mobile-nav-link {% if request.endpoint == 'events' or request.endpoint == 'event_detail' %}active-link{% endif %}"><i class="fa fa-calendar-alt mr-2"></i>Events</a>
+          <a href="{{ url_for('videos') }}" class="mobile-nav-link {% if request.endpoint == 'videos' %}active-link{% endif %}"><i class="fa fa-video mr-2"></i>Videos</a>
+          <a href="{{ url_for('posts') }}" class="mobile-nav-link {% if request.endpoint == 'posts' or request.endpoint == 'post_detail' %}active-link{% endif %}"><i class="fa fa-newspaper mr-2"></i>Posts</a>
+          <a href="{{ url_for('testimonials_page') }}" class="mobile-nav-link {% if request.endpoint == 'testimonials_page' %}active-link{% endif %}"><i class="fa fa-comment-dots mr-2"></i>Testimonials</a>
+          <a href="{{ url_for('merchandise') }}" class="mobile-nav-link {% if request.endpoint == 'merchandise' %}active-link{% endif %}"><i class="fa fa-shopping-bag mr-2"></i>Shop</a>
+          <a href="{{ url_for('sponsors') }}" class="mobile-nav-link {% if request.endpoint == 'sponsors' %}active-link{% endif %}"><i class="fa fa-handshake mr-2"></i>Sponsors</a>
+          <a href="{{ url_for('partnerships') }}" class="mobile-nav-link {% if request.endpoint == 'partnerships' %}active-link{% endif %}"><i class="fa fa-briefcase mr-2"></i>Partner</a>
+          <a href="{{ url_for('community') }}" class="mobile-nav-link {% if request.endpoint == 'community' %}active-link{% endif %}"><i class="fa fa-users mr-2"></i>Community</a>
+          <a href="{{ url_for('contact') }}" class="mobile-nav-link {% if request.endpoint == 'contact' %}active-link{% endif %}"><i class="fa fa-envelope mr-2"></i>Connect</a>
         </div>
       </nav>
     </header>

@@ -85,12 +85,21 @@
         </div>
       </div>
       
-      <a 
-        href="{{ url_for('posts') }}" 
-        class="btn-primary text-sm sm:text-base"
-      >
-        ← Back to All Posts
-      </a>
+      <div class="flex items-center gap-3">
+        <form id="like-form" action="{{ url_for('post_like', post_id=post.id) }}" method="POST">
+          <button type="button" id="like-btn" class="btn-secondary flex items-center gap-2">
+            <i class="fa fa-heart text-afro-300"></i>
+            <span id="like-count">{{ post.likes or 0 }}</span>
+          </button>
+        </form>
+
+        <a 
+          href="{{ url_for('posts') }}" 
+          class="btn-primary text-sm sm:text-base"
+        >
+          ← Back to All Posts
+        </a>
+      </div>
     </div>
   </article>
 
@@ -134,10 +143,30 @@
           <div class="card-soft">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-full bg-white/6 flex items-center justify-center text-sm font-bold">{{ c.name[0]|upper }}</div>
-              <div>
+              <div class="flex-1">
                 <p class="font-semibold text-white">{{ c.name }}</p>
                 <p class="text-xs text-afro-100/60">{{ c.created_at[:19] }}</p>
                 <p class="mt-2 text-afro-100/80">{{ c.message }}</p>
+                <div class="mt-3 flex gap-3">
+                  <button type="button" class="reply-btn text-sm text-afro-200 hover:underline" data-comment-id="{{ c.id }}" data-comment-author="{{ c.name }}">Reply</button>
+                </div>
+
+                {% if c.replies %}
+                  <div class="mt-4 pl-12 space-y-3">
+                    {% for r in c.replies %}
+                      <div class="card">
+                        <div class="flex items-start gap-3">
+                          <div class="w-8 h-8 rounded-full bg-white/6 flex items-center justify-center text-sm font-bold">{{ r.name[0]|upper }}</div>
+                          <div>
+                            <p class="font-semibold text-white">{{ r.name }}</p>
+                            <p class="text-xs text-afro-100/60">{{ r.created_at[:19] }}</p>
+                            <p class="mt-2 text-afro-100/80">{{ r.message }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -150,7 +179,9 @@
     {% endif %}
 
     <!-- Comment Form -->
-    <form method="POST" class="card space-y-6">
+    <form method="POST" class="card space-y-6" id="comment-form">
+      <input type="hidden" name="parent_id" id="parent_id" value="" />
+      <div id="replying-to" class="text-sm text-afro-100/60"></div>
       <div>
         <label for="name" class="block text-sm font-semibold text-white mb-2">Name*</label>
         <input type="text" id="name" name="name" class="field-input" required />
@@ -186,4 +217,44 @@
     color: #ffe4b5;
   }
 </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Like button handler (AJAX)
+  document.addEventListener('DOMContentLoaded', function(){
+    const likeBtn = document.getElementById('like-btn');
+    const likeCount = document.getElementById('like-count');
+    if (likeBtn) {
+      likeBtn.addEventListener('click', function(){
+        fetch("{{ url_for('post_like', post_id=post.id) }}", {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': window.csrfToken,
+            'Accept': 'application/json'
+          },
+        }).then(r => r.json()).then(data => {
+          if (data && data.likes !== undefined) {
+            likeCount.textContent = data.likes;
+          }
+        }).catch(() => {
+          // fallback: submit form (reload)
+          document.getElementById('like-form').submit();
+        });
+      });
+    }
+
+    // Reply button handling
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const commentId = this.getAttribute('data-comment-id');
+        const author = this.getAttribute('data-comment-author');
+        document.getElementById('parent_id').value = commentId;
+        document.getElementById('replying-to').textContent = 'Replying to ' + author + ' — your reply will appear after approval.';
+        window.scrollTo({ top: document.getElementById('comment-form').offsetTop - 120, behavior: 'smooth' });
+        document.getElementById('name').focus();
+      });
+    });
+  });
+</script>
 {% endblock %}
