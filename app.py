@@ -2,6 +2,7 @@ import os
 import re
 import mimetypes
 import uuid
+from secrets import token_urlsafe
 from hmac import compare_digest
 from datetime import datetime
 from functools import wraps
@@ -9,7 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
-from flask import Flask, Response, flash, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for
 from types import SimpleNamespace
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
@@ -19,16 +20,20 @@ app = Flask(__name__)
 
 def _required_secret_key():
     secret_key = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY")
-    if secret_key:
-        return secret_key
-
-    if os.getenv("FLASK_ENV", "development").lower() == "production":
-        raise RuntimeError("SECRET_KEY or FLASK_SECRET_KEY must be set in production.")
-
-    return "dev-only-change-this-secret"
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY or FLASK_SECRET_KEY must be set.")
+    return secret_key
 
 
 app.config["SECRET_KEY"] = _required_secret_key()
+
+
+def _get_csrf_token():
+    token = session.get("csrf_token")
+    if not token:
+        token = token_urlsafe(32)
+        session["csrf_token"] = token
+    return token
 
 
 def _clean_database_url(raw_value):
@@ -127,6 +132,25 @@ def get_mail():
     return mail
 
 
+@app.context_processor
+def inject_csrf_token():
+    return {"csrf_token": _get_csrf_token()}
+
+
+@app.before_request
+def validate_csrf_token():
+    if request.method != "POST":
+        return
+
+    submitted_token = (
+        request.form.get("csrf_token")
+        or request.headers.get("X-CSRFToken")
+        or request.headers.get("X-CSRF-Token")
+    )
+    if not submitted_token or submitted_token != session.get("csrf_token"):
+        abort(400)
+
+
 # Database Models
 class Submission(db.Model):
     __tablename__ = "submissions"
@@ -187,7 +211,7 @@ class Comment(db.Model):
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    approved = db.Column(db.Boolean, default=True)
+    approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(50), nullable=False)
 
 
@@ -1030,12 +1054,12 @@ def post_detail(post_id):
             name=name,
             email=email,
             message=message,
-            approved=True,
+            approved=False,
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         )
         db.session.add(comment)
         db.session.commit()
-        flash("Thanks — your comment was posted.", "success")
+        flash("Thanks — your comment is pending approval.", "success")
         return redirect(url_for("post_detail", post_id=post_id))
 
     related_posts = Post.query.filter(Post.published == True, Post.id != post_id).order_by(Post.created_at.desc()).limit(3).all()
@@ -2132,6 +2156,26 @@ def admin_comments():
         print(f"Failed to load comments: {e}")
         comments = []
     return render_template("admin_comments.html", comments=comments)
+
+
+@app.route("/admin/comments/approve/<int:comment_id>", methods=["POST"])
+@admin_required
+def admin_comments_approve(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    comment.approved = True
+    db.session.commit()
+    flash("Comment approved.", "success")
+    return redirect(url_for("admin_comments"))
+
+
+@app.route("/admin/comments/reject/<int:comment_id>", methods=["POST"])
+@admin_required
+def admin_comments_reject(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    flash("Comment deleted.", "success")
+    return redirect(url_for("admin_comments"))
 
 
 # Admin Newsletter

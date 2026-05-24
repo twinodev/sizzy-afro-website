@@ -171,7 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const response = await fetch('{{ url_for("send_test_email") }}', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': window.csrfToken || document.querySelector('meta[name="csrf-token"]').content
         }
       });
 

@@ -13,6 +13,7 @@
     <meta name="keywords" content="{{ seo_meta.keywords }}" />
     <meta name="robots" content="{{ seo_meta.robots }}" />
     <link rel="canonical" href="{{ seo_meta.canonical_url }}" />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
 
     <meta property="og:site_name" content="{{ seo_meta.site_name }}" />
     <meta property="og:type" content="{{ seo_meta.og_type }}" />
@@ -90,7 +91,25 @@
         }
       };
 
+      window.csrfToken = {{ csrf_token | tojson }};
+
+      function attachCsrfTokenToForms() {
+        const forms = document.querySelectorAll('form[method="POST"], form[method="post"]');
+        forms.forEach((form) => {
+          if (form.querySelector('input[name="csrf_token"]')) {
+            return;
+          }
+
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = 'csrf_token';
+          hiddenInput.value = window.csrfToken || '';
+          form.appendChild(hiddenInput);
+        });
+      }
+
       document.addEventListener('DOMContentLoaded', () => {
+        attachCsrfTokenToForms();
         setTimeout(() => document.body.classList.add('loaded'), 50);
       });
     </script>

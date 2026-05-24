@@ -39,9 +39,7 @@
       <div class="text-afro-100/80 leading-relaxed space-y-4 text-base sm:text-lg">
         {% for paragraph in post.content.split('\n\n') %}
           {% if paragraph.strip() %}
-            {# Preserve line breaks and formatting #}
-            {% set formatted = paragraph.replace('\n', '<br>') %}
-            <p>{{ formatted|safe }}</p>
+            <p class="whitespace-pre-line">{{ paragraph }}</p>
           {% endif %}
         {% endfor %}
       </div>
