@@ -20,9 +20,21 @@ app = Flask(__name__)
 
 def _required_secret_key():
     secret_key = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY")
-    if not secret_key:
-        raise RuntimeError("SECRET_KEY or FLASK_SECRET_KEY must be set.")
-    return secret_key
+    if secret_key:
+        return secret_key
+
+    env = os.getenv("FLASK_ENV", "development").lower()
+    if env == "production":
+        # Avoid failing the import on misconfigured deployments (Vercel, Render, etc.).
+        # Use an ephemeral secret so the site stays up, but warn loudly.
+        fallback = token_urlsafe(64)
+        print(
+            "WARNING: SECRET_KEY or FLASK_SECRET_KEY is not set. Using an ephemeral secret; sessions will not persist across restarts."
+        )
+        return fallback
+
+    # Development fallback (convenience only)
+    return "dev-only-change-this-secret"
 
 
 app.config["SECRET_KEY"] = _required_secret_key()
