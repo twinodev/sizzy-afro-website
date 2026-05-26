@@ -237,15 +237,15 @@ All rights reserved © 2026.
 ## Email Notifications
 When configured, contact form submissions can send notifications to `ADMIN_EMAIL`.
 
-For Gmail:
-- Go to Google Account > Security.
-- Enable 2-Step Verification.
-- Create an app password for Mail.
-- Use that app password as `MAIL_PASSWORD`.
+For Brevo API:
+- In the Brevo dashboard, create or copy your API key.
+- Set `BREVO_API_KEY` to that key.
+- Set `BREVO_SENDER_EMAIL` to a verified sender email in Brevo.
+- Set `BREVO_SENDER_NAME` if you want a custom sender name.
 
 ## Tech
 - Flask
 - Tailwind CSS CDN
-- Flask-Mail
+- Brevo API email delivery
 - Flask-SQLAlchemy
 - PostgreSQL/Supabase-ready storage configuration

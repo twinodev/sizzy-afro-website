@@ -67,31 +67,16 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db = SQLAlchemy(app)
 
 # Email configuration
-app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
-app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
+app.config["BREVO_API_KEY"] = os.getenv("BREVO_API_KEY")
+app.config["BREVO_SENDER_EMAIL"] = os.getenv("BREVO_SENDER_EMAIL")
+app.config["BREVO_SENDER_NAME"] = os.getenv("BREVO_SENDER_NAME", "Dance with Sizzy Afro")
 app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "sizzyafro@gmail.com")
-app.config["MAIL_SUPPRESS_SEND"] = os.getenv("MAIL_SUPPRESS_SEND", "False").lower() in {"1", "true", "yes", "on"}
 app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL")
 app.config["SUPABASE_SERVICE_ROLE_KEY"] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 app.config["SUPABASE_FLYER_BUCKET"] = os.getenv("SUPABASE_FLYER_BUCKET", "event-flyers")
 app.config["SUPABASE_LOGO_BUCKET"] = os.getenv("SUPABASE_LOGO_BUCKET", "sponsor-logos")
 app.config["SUPABASE_POST_BUCKET"] = os.getenv("SUPABASE_POST_BUCKET", "post-images")
 app.config["SUPABASE_GALLERY_BUCKET"] = os.getenv("SUPABASE_GALLERY_BUCKET", app.config["SUPABASE_POST_BUCKET"])
-
-# Initialize mail lazily
-mail = None
-
-def get_mail():
-    """Get mail instance, initializing if needed"""
-    global mail
-    if mail is None:
-        from flask_mail import Mail
-        mail = Mail(app)
-    return mail
 
 
 @app.context_processor
@@ -525,18 +510,37 @@ def admin_required(view_func):
 
 
 def send_notification_email(subject, body):
-    """Send email notification to admin"""
+    """Send email notification to admin via Brevo's REST API."""
     try:
-        if app.config["MAIL_USERNAME"] and app.config["ADMIN_EMAIL"]:
-            from flask_mail import Message
-            msg = Message(
-                subject=subject,
-                recipients=[app.config["ADMIN_EMAIL"]],
-                body=body
+        api_key = app.config.get("BREVO_API_KEY")
+        sender_email = app.config.get("BREVO_SENDER_EMAIL")
+        recipient_email = app.config.get("ADMIN_EMAIL")
+        if api_key and sender_email and recipient_email:
+            import json
+            from urllib import request
+
+            payload = {
+                "sender": {
+                    "email": sender_email,
+                    "name": app.config.get("BREVO_SENDER_NAME", "Dance with Sizzy Afro"),
+                },
+                "to": [{"email": recipient_email}],
+                "subject": subject,
+                "textContent": body,
+            }
+            req = request.Request(
+                "https://api.brevo.com/v3/smtp/email",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "accept": "application/json",
+                    "api-key": api_key,
+                    "content-type": "application/json",
+                },
+                method="POST",
             )
-            mail_instance = get_mail()
-            mail_instance.send(msg)
-            return True
+            with request.urlopen(req, timeout=15) as response:
+                if response.status in (200, 201):
+                    return True
     except Exception as e:
         print(f"Email notification failed: {e}")
     return False
@@ -2068,12 +2072,12 @@ def admin_social_links_delete(link_id):
 @app.route("/admin/send-test-email", methods=["POST"])
 @admin_required
 def send_test_email():
-    """Send a test email to verify SMTP configuration."""
+    """Send a test email to verify Brevo API configuration."""
     try:
         email_body = """
 Test Email from Dance with Sizzy Afro
 
-This is a test email to verify your SMTP configuration is working correctly.
+This is a test email to verify your Brevo API configuration is working correctly.
 
 If you received this, your email setup is good to go!
         """
@@ -2084,7 +2088,7 @@ If you received this, your email setup is good to go!
         if result:
             return {"message": "Test email sent successfully!"}, 200
         else:
-            return {"message": "Failed to send test email. Check your SMTP configuration."}, 400
+            return {"message": "Failed to send test email. Check your Brevo API configuration."}, 400
     except Exception as e:
         return {"message": f"Error: {str(e)}"}, 500
 
