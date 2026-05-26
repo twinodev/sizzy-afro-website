@@ -936,7 +936,7 @@ def admin_dashboard():
 @app.route("/events")
 def events():
     try:
-        events_list = Event.query.order_by(Event.event_date.asc()).all()
+        events_list = Event.query.order_by(Event.event_date.desc()).all()
     except Exception as e:
         print(f"Failed to load events: {e}")
         events_list = []
@@ -1047,11 +1047,23 @@ def videos():
                 return None
             return None
 
+        def display_thumbnail(video):
+            if video.thumbnail_url:
+                return video.thumbnail_url
+            youtube_id = extract_youtube_id(video.url)
+            if youtube_id:
+                return f"https://img.youtube.com/vi/{youtube_id}/hqdefault.jpg"
+            return url_for("static", filename="images/hero.jpg")
+
         # Attach youtube_id attribute for template convenience
         for v in featured_list:
             setattr(v, 'youtube_id', extract_youtube_id(v.url) or '')
+            setattr(v, 'display_url', v.url)
+            setattr(v, 'display_thumbnail', display_thumbnail(v))
         for v in videos_pagination.items:
             setattr(v, 'youtube_id', extract_youtube_id(v.url) or '')
+            setattr(v, 'display_url', v.url)
+            setattr(v, 'display_thumbnail', display_thumbnail(v))
 
         categories = []
     except Exception as e:
@@ -2091,9 +2103,15 @@ def admin_videos_edit(video_id):
             video.event_id = request.form.get("event_id", type=int) or None
         if _table_has_column("videos", "published"):
             video.published = request.form.get("published") == "on"
-        db.session.commit()
-        flash("Video updated successfully.", "success")
-        return redirect(url_for("admin_videos"))
+        try:
+            db.session.commit()
+            flash("Video updated successfully.", "success")
+            return redirect(url_for("admin_videos"))
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Failed to update video")
+            flash("Unable to update video right now.", "error")
+            return redirect(url_for("admin_videos_edit", video_id=video_id))
     
     try:
         events = Event.query.all()
