@@ -7,6 +7,11 @@ from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 from flask import Flask, render_template, request, session, url_for, redirect, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 
+# Create Flask app instance
+app = Flask(__name__, static_folder="static", template_folder="templates")
+# Basic config defaults; override via environment in production
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "changeme")
+
 def _clean_database_url(raw_value):
     if not raw_value:
         return ""
