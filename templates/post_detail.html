@@ -37,11 +37,15 @@
     <!-- Article Content -->
     <div class="prose prose-invert max-w-none mb-12">
       <div class="text-afro-100/80 leading-relaxed space-y-4 text-base sm:text-lg">
-        {% for paragraph in post.content.split('\n\n') %}
-          {% if paragraph.strip() %}
-            <p class="whitespace-pre-line">{{ paragraph }}</p>
-          {% endif %}
-        {% endfor %}
+        {% if post_html %}
+          {{ post_html | safe }}
+        {% else %}
+          {% for paragraph in post.content.split('\n\n') %}
+            {% if paragraph.strip() %}
+              <p class="whitespace-pre-line">{{ paragraph }}</p>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
       </div>
     </div>
 

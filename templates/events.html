@@ -10,9 +10,12 @@
 
   <div class="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for event in events %}
-      <div class="card group hover:shadow-lg hover:shadow-afro-500/20 transition-all">
+      <div class="card group hover:shadow-lg hover:shadow-afro-500/20 transition-all relative">
         {% if event.flyer_url %}
           <img src="{{ event.flyer_url }}" alt="{{ event.title }} flyer" class="w-full h-56 object-cover rounded-xl mb-4 border border-white/10 group-hover:scale-105 transition-transform" />
+          {% if event.ended %}
+            <div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Ended</div>
+          {% endif %}
         {% endif %}
         <p class="text-xs text-afro-200 font-semibold">{{ event.event_date }}</p>
         <h2 class="text-xl font-bold text-afro-200 mt-2 group-hover:text-afro-100 transition-colors">{{ event.title }}</h2>
@@ -20,7 +23,16 @@
         {% if event.location %}
           <p class="mt-2 text-sm text-afro-100/80">📍 {{ event.location }}</p>
         {% endif %}
-        <div class="mt-4 text-afro-300 font-semibold text-sm">Learn More →</div>
+        <div class="mt-4 flex items-center gap-3">
+          {% if event.register_link and not event.ended %}
+            <a href="{{ event.register_link }}" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm">Register</a>
+          {% else %}
+            <div class="text-afro-300 font-semibold text-sm">Learn More →</div>
+          {% endif %}
+          {% if event.ended %}
+            <div class="text-xs text-afro-100/60">This event has ended.</div>
+          {% endif %}
+        </div>
       </div>
     {% else %}
       <div class="col-span-full text-center py-12">

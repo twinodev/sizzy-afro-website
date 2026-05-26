@@ -139,6 +139,7 @@ class Event(db.Model):
     description = db.Column(db.Text)
     flyer_url = db.Column(db.Text, nullable=False)
     event_date = db.Column(db.String(50), nullable=False)
+    registration_url = db.Column(db.Text)
     location = db.Column(db.String(255))
     created_at = db.Column(db.String(50), nullable=False)
 
@@ -254,6 +255,7 @@ class ClassSchedule(db.Model):
     class_name = db.Column(db.String(255), nullable=False)
     level = db.Column(db.String(50))
     location = db.Column(db.String(255))
+    end_date = db.Column(db.String(50))
     created_at = db.Column(db.String(50), nullable=False)
 
 
@@ -535,39 +537,95 @@ def admin_required(view_func):
 
 def send_notification_email(subject, body):
     """Send email notification to admin via Brevo's REST API."""
+    # Convenience wrapper that sends to the configured admin address.
+    admin = app.config.get("ADMIN_EMAIL")
+    if not admin:
+        return False
+    return send_email([admin], subject, text_content=body)
+
+
+def send_email(recipients, subject, text_content, html_content=None, timeout=15):
+    """Send email via Brevo REST API.
+
+    recipients: list of email strings
+    text_content: plain text body
+    html_content: optional HTML body
+    """
     try:
         api_key = app.config.get("BREVO_API_KEY")
         sender_email = app.config.get("BREVO_SENDER_EMAIL")
-        recipient_email = app.config.get("ADMIN_EMAIL")
-        if api_key and sender_email and recipient_email:
-            import json
-            from urllib import request
+        sender_name = app.config.get("BREVO_SENDER_NAME", "Dance with Sizzy Afro")
+        if not (api_key and sender_email and recipients):
+            return False
 
-            payload = {
-                "sender": {
-                    "email": sender_email,
-                    "name": app.config.get("BREVO_SENDER_NAME", "Dance with Sizzy Afro"),
-                },
-                "to": [{"email": recipient_email}],
-                "subject": subject,
-                "textContent": body,
-            }
-            req = request.Request(
-                "https://api.brevo.com/v3/smtp/email",
-                data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "accept": "application/json",
-                    "api-key": api_key,
-                    "content-type": "application/json",
-                },
-                method="POST",
-            )
-            with request.urlopen(req, timeout=15) as response:
-                if response.status in (200, 201):
-                    return True
+        import json
+        from urllib import request
+
+        to_list = [{"email": r} for r in recipients]
+        payload = {
+            "sender": {"email": sender_email, "name": sender_name},
+            "to": to_list,
+            "subject": subject,
+            "textContent": text_content,
+        }
+        if html_content:
+            payload["htmlContent"] = html_content
+
+        req = request.Request(
+            "https://api.brevo.com/v3/smtp/email",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "accept": "application/json",
+                "api-key": api_key,
+                "content-type": "application/json",
+            },
+            method="POST",
+        )
+        with request.urlopen(req, timeout=timeout) as response:
+            if response.status in (200, 201):
+                return True
+            else:
+                try:
+                    resp_body = response.read().decode("utf-8")
+                    print(f"Brevo response: {response.status} {resp_body}")
+                except Exception:
+                    print(f"Brevo response status: {response.status}")
     except Exception as e:
-        print(f"Email notification failed: {e}")
+        print(f"Email send failed: {e}")
     return False
+
+
+def render_markdown_to_html(raw_text):
+    """Render markdown to sanitized HTML when possible.
+
+    Falls back to None if markdown is not available, so callers can use a safe fallback.
+    """
+    if not raw_text:
+        return ""
+    try:
+        import markdown as _md
+    except Exception:
+        return None
+
+    try:
+        html = _md.markdown(raw_text, extensions=["extra", "sane_lists", "nl2br"])
+    except Exception:
+        try:
+            html = _md.markdown(raw_text)
+        except Exception:
+            return None
+
+    # Try to sanitize output if bleach is available
+    try:
+        import bleach as _bleach
+
+        allowed_tags = _bleach.sanitizer.ALLOWED_TAGS + ["p", "pre", "code", "img", "h1", "h2", "h3", "h4", "br"]
+        allowed_attrs = {**_bleach.sanitizer.ALLOWED_ATTRIBUTES, "img": ["src", "alt", "title"]}
+        clean = _bleach.clean(html, tags=allowed_tags, attributes=allowed_attrs)
+        return clean
+    except Exception:
+        # No bleach available — return raw HTML (may be escaped by template if not marked safe)
+        return html
 
 
 def _site_url():
@@ -691,8 +749,71 @@ def _default_seo_for_request():
         ],
     }
 
-    if endpoint in {"post_detail", "event_detail"}:
-        seo["og_type"] = "article"
+    # Enrich SEO for specific pages with content-driven metadata and JSON-LD
+    if endpoint == "post_detail":
+        try:
+            post_id = int((request.view_args or {}).get("post_id") or 0)
+            post = Post.query.get(post_id)
+            if post:
+                seo["title"] = f"{post.title} | {site_name}"
+                seo["description"] = _truncate_text(post.excerpt or post.content or seo["description"]) or seo["description"]
+                seo["canonical_url"] = _clean_canonical_url(_absolute_url(url_for("post_detail", post_id=post.id)))
+                seo["og_type"] = "article"
+                if post.image_url:
+                    seo["og_image"] = _absolute_url(post.image_url)
+
+                # Article JSON-LD
+                article_ld = {
+                    "@context": "https://schema.org",
+                    "@type": "Article",
+                    "headline": post.title,
+                    "image": [seo["og_image"]] if seo.get("og_image") else [],
+                    "datePublished": _safe_lastmod(post.created_at) or None,
+                    "dateModified": _safe_lastmod(post.updated_at) or _safe_lastmod(post.created_at),
+                    "author": {"@type": "Person", "name": site_name},
+                    "mainEntityOfPage": {"@type": "WebPage", "@id": seo["canonical_url"]},
+                    "description": seo["description"],
+                }
+                seo["json_ld"].append(article_ld)
+        except Exception:
+            pass
+
+    if endpoint == "events":
+        try:
+            events_list = Event.query.order_by(Event.event_date.desc()).all()
+            events_ld = []
+            for ev in events_list:
+                start_date = None
+                try:
+                    # accept YYYY-MM-DD or YYYY-MM-DD HH:MM:SS
+                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+                        try:
+                            start_date = datetime.strptime(str(ev.event_date), fmt).isoformat()
+                            break
+                        except Exception:
+                            continue
+                except Exception:
+                    start_date = None
+
+                ev_url = ev.registration_url or _absolute_url(url_for("events"))
+                events_ld.append(
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Event",
+                        "name": ev.title,
+                        "startDate": start_date,
+                        "location": {"@type": "Place", "name": ev.location or site_name},
+                        "image": [_absolute_url(ev.flyer_url)] if ev.flyer_url else [],
+                        "description": _truncate_text(ev.description) or None,
+                        "url": ev_url,
+                    }
+                )
+            if events_ld:
+                seo["json_ld"].extend(events_ld)
+        except Exception:
+            pass
+
+    # For admin pages, ensure noindex
 
     return seo
 
@@ -821,6 +942,25 @@ def newsletter_subscribe():
         )
         db.session.add(submission)
         db.session.commit()
+        # Send admin notification and confirmation to subscriber (best-effort)
+        try:
+            send_notification_email(
+                subject=f"New Newsletter Signup: {email}",
+                body=f"New newsletter signup: {email}\nSubmitted at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC",
+            )
+        except Exception as e:
+            print(f"Failed to send admin newsletter notification: {e}")
+
+        try:
+            welcome_text = (
+                f"Thanks for subscribing to Dance with Sizzy Afro!\n\n"
+                "We\'re excited to share news, events, and community updates with you.\n\n"
+                "If you did not sign up for this, you can ignore this message."
+            )
+            # send a welcome email to the subscriber
+            send_email([email], subject="Welcome to Dance with Sizzy Afro", text_content=welcome_text)
+        except Exception as e:
+            print(f"Failed to send welcome email: {e}")
     except Exception as e:
         # Don't raise — log and continue so the public homepage remains available.
         print(f"Failed to record newsletter signup: {e}")
@@ -916,6 +1056,23 @@ def events():
     except Exception as e:
         print(f"Failed to load events: {e}")
         events_list = []
+    today_date = datetime.utcnow().date()
+    # Annotate events with `ended` boolean and normalized registration url
+    for ev in events_list:
+        ev.ended = False
+        try:
+            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+                try:
+                    ev_date = datetime.strptime(str(ev.event_date), fmt).date()
+                    ev.ended = ev_date < today_date
+                    break
+                except Exception:
+                    continue
+        except Exception:
+            ev.ended = False
+
+        ev.register_link = ev.registration_url or None
+
     return render_template("events.html", events=events_list)
 
 
@@ -1011,6 +1168,14 @@ def post_detail(post_id):
         )
         db.session.add(comment)
         db.session.commit()
+        # Notify admins about new pending comment (best-effort)
+        try:
+            post_link = _absolute_url(url_for("post_detail", post_id=post.id))
+            comment_body = f"New comment awaiting approval\n\nPost: {post.title}\nLink: {post_link}\n\nName: {name}\nEmail: {email}\nMessage: {message}\n\nSubmitted at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+            send_notification_email(subject=f"New Comment on: {post.title}", body=comment_body)
+        except Exception as e:
+            print(f"Failed to send new comment notification: {e}")
+
         flash("Thanks — your comment is pending approval.", "success")
         return redirect(url_for("post_detail", post_id=post_id))
 
@@ -1063,7 +1228,14 @@ def post_detail(post_id):
             }
         ],
     }
-    return render_template("post_detail.html", post=post, related_posts=related_posts, comments=comments, seo=seo)
+    # Render markdown to HTML if available; otherwise template will fallback to paragraph rendering
+    post_html = None
+    try:
+        post_html = render_markdown_to_html(post.content)
+    except Exception:
+        post_html = None
+
+    return render_template("post_detail.html", post=post, related_posts=related_posts, comments=comments, seo=seo, post_html=post_html)
 
 
 @app.route("/posts/<int:post_id>/like", methods=["POST"])
@@ -1195,6 +1367,7 @@ def admin_events_create():
             title=title,
             description=description,
             flyer_url=flyer_url,
+            registration_url=registration_url,
             event_date=event_date,
             location=location,
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -1215,6 +1388,7 @@ def admin_events_edit(event_id):
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         description = request.form.get("description", "").strip()
+        registration_url = request.form.get("registration_url", "").strip()
         event_date = request.form.get("event_date", "").strip()
         location = request.form.get("location", "").strip()
         flyer_file = request.files.get("flyer_file")
@@ -1234,6 +1408,7 @@ def admin_events_edit(event_id):
         event.title = title
         event.description = description
         event.flyer_url = flyer_url
+        event.registration_url = registration_url
         event.event_date = event_date
         event.location = location
         db.session.commit()
@@ -1831,6 +2006,22 @@ def admin_classes():
     except Exception as e:
         print(f"Failed to load class schedules: {e}")
         schedules = []
+    # Annotate schedules with `ended` boolean based on optional end_date
+    today = datetime.utcnow().date()
+    for s in schedules:
+        s.ended = False
+        if getattr(s, 'end_date', None):
+            try:
+                for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+                    try:
+                        d = datetime.strptime(str(s.end_date), fmt).date()
+                        s.ended = d < today
+                        break
+                    except Exception:
+                        continue
+            except Exception:
+                s.ended = False
+
     return render_template("admin_classes.html", schedules=schedules)
 
 
@@ -1841,6 +2032,7 @@ def admin_classes_create():
         day_of_week = request.form.get("day_of_week", "").strip()
         start_time = request.form.get("start_time", "").strip()
         end_time = request.form.get("end_time", "").strip()
+        end_date = request.form.get("end_date", "").strip() or None
         class_name = request.form.get("class_name", "").strip()
         level = request.form.get("level", "").strip() or None
         location = request.form.get("location", "").strip() or None
@@ -1854,6 +2046,7 @@ def admin_classes_create():
                 day_of_week=day_of_week,
                 start_time=start_time,
                 end_time=end_time,
+                end_date=end_date,
                 class_name=class_name,
                 level=level,
                 location=location,
@@ -1880,6 +2073,7 @@ def admin_classes_edit(schedule_id):
         schedule.day_of_week = request.form.get("day_of_week", "").strip()
         schedule.start_time = request.form.get("start_time", "").strip()
         schedule.end_time = request.form.get("end_time", "").strip()
+        schedule.end_date = request.form.get("end_date", "").strip() or None
         schedule.class_name = request.form.get("class_name", "").strip()
         schedule.level = request.form.get("level", "").strip() or None
         schedule.location = request.form.get("location", "").strip() or None

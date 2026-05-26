@@ -54,6 +54,12 @@
       <textarea id="description" name="description" rows="5" class="field-input" placeholder="Tell people about this event...">{{ event.description if event else '' }}</textarea>
     </div>
 
+    <div>
+      <label for="registration_url" class="block text-sm mb-2 text-afro-100">Registration Link</label>
+      <input id="registration_url" name="registration_url" type="url" class="field-input" value="{{ event.registration_url if event else '' }}" placeholder="https://example.com/register" />
+      <p class="mt-2 text-xs text-afro-100/70">Optional: external registration or ticketing URL.</p>
+    </div>
+
     <div class="flex gap-3">
       <button type="submit" class="btn-primary">{{ 'Update Event' if event else 'Create Event' }}</button>
       <a href="{{ url_for('admin_events') }}" class="btn-secondary">Cancel</a>

@@ -36,7 +36,7 @@
         <tr class="hover:bg-white/5 transition-colors">
           <td class="px-4 py-3 font-semibold text-afro-200">{{ schedule.day_of_week }}</td>
           <td class="px-4 py-3">{{ schedule.start_time }} - {{ schedule.end_time }}</td>
-          <td class="px-4 py-3">{{ schedule.class_name }}</td>
+          <td class="px-4 py-3">{{ schedule.class_name }}{% if schedule.ended %} <span class="ml-2 inline-block bg-red-600 text-white text-xs px-2 py-0.5 rounded">Ended</span>{% endif %}</td>
           <td class="px-4 py-3 text-afro-100/60">{{ schedule.level or '-' }}</td>
           <td class="px-4 py-3 text-afro-100/60">{{ schedule.location or '-' }}</td>
           <td class="px-4 py-3 flex gap-2">
