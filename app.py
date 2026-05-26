@@ -1,55 +1,3 @@
-import os
-import re
-import mimetypes
-import uuid
-from secrets import token_urlsafe
-from hmac import compare_digest
-from datetime import datetime
-from functools import wraps
-from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
-from urllib.request import Request, urlopen
-
-from flask import Flask, Response, abort, flash, redirect, render_template, request, session, url_for, jsonify
-from types import SimpleNamespace
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import inspect, text
-import io
-import csv
-
-app = Flask(__name__)
-
-
-def _required_secret_key():
-    secret_key = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY")
-    if secret_key:
-        return secret_key
-
-    env = os.getenv("FLASK_ENV", "development").lower()
-    if env == "production":
-        # Avoid failing the import on misconfigured deployments (Vercel, Render, etc.).
-        # Use an ephemeral secret so the site stays up, but warn loudly.
-        fallback = token_urlsafe(64)
-        print(
-            "WARNING: SECRET_KEY or FLASK_SECRET_KEY is not set. Using an ephemeral secret; sessions will not persist across restarts."
-        )
-        return fallback
-
-    # Development fallback (convenience only)
-    return "dev-only-change-this-secret"
-
-
-app.config["SECRET_KEY"] = _required_secret_key()
-
-
-def _get_csrf_token():
-    token = session.get("csrf_token")
-    if not token:
-        token = token_urlsafe(32)
-        session["csrf_token"] = token
-    return token
-
-
 def _clean_database_url(raw_value):
     if not raw_value:
         return ""
@@ -955,14 +903,12 @@ def event_detail(event_id):
 
     try:
         event = Event.query.get_or_404(event_id)
-        testimonials = Testimonial.query.filter_by(event_id=event_id, published=True).all()
         faqs = FAQ.query.filter_by(event_id=event_id).order_by(FAQ.order.asc()).all()
         merchandise = Merchandise.query.filter_by(event_id=event_id, published=True).all()
-        videos = Video.query.filter_by(event_id=event_id, published=True).all()
     except Exception as e:
         # Distinguish not-found vs other DB errors in logs
         print(f"Failed to load event detail {event_id}: {type(e).__name__}: {e}")
-        return render_template("event_detail.html", event=None, testimonials=[], faqs=[], merchandise=[], videos=[])
+        return render_template("event_detail.html", event=None, faqs=[], merchandise=[])
 
     # Log what was retrieved for easier debugging in production logs
     try:
@@ -1007,72 +953,10 @@ def event_detail(event_id):
     return render_template(
         "event_detail.html",
         event=event,
-        testimonials=testimonials,
         faqs=faqs,
         merchandise=merchandise,
-        videos=videos,
         seo=seo,
     )
-
-
-@app.route("/videos")
-def videos():
-    page = request.args.get("page", 1, type=int)
-    current_category = request.args.get("category")
-
-    try:
-        q = Video.query.filter_by(published=True)
-
-        # Featured videos (most recent)
-        featured_list = q.order_by(Video.created_at.desc()).limit(3).all()
-
-        # Paginate main list
-        videos_pagination = q.order_by(Video.created_at.desc()).paginate(page=page, per_page=9, error_out=False)
-
-        # Helper to extract YouTube ID from common URL forms
-        def extract_youtube_id(url):
-            if not url:
-                return None
-            try:
-                parsed = urlparse(url)
-                if parsed.netloc.endswith('youtu.be'):
-                    return parsed.path.lstrip('/')
-                qs = dict(parse_qsl(parsed.query))
-                if 'v' in qs:
-                    return qs['v']
-                parts = parsed.path.split('/')
-                if parts:
-                    return parts[-1]
-            except Exception:
-                return None
-            return None
-
-        def display_thumbnail(video):
-            if video.thumbnail_url:
-                return video.thumbnail_url
-            youtube_id = extract_youtube_id(video.url)
-            if youtube_id:
-                return f"https://img.youtube.com/vi/{youtube_id}/hqdefault.jpg"
-            return url_for("static", filename="images/hero.jpg")
-
-        # Attach youtube_id attribute for template convenience
-        for v in featured_list:
-            setattr(v, 'youtube_id', extract_youtube_id(v.url) or '')
-            setattr(v, 'display_url', v.url)
-            setattr(v, 'display_thumbnail', display_thumbnail(v))
-        for v in videos_pagination.items:
-            setattr(v, 'youtube_id', extract_youtube_id(v.url) or '')
-            setattr(v, 'display_url', v.url)
-            setattr(v, 'display_thumbnail', display_thumbnail(v))
-
-        categories = []
-    except Exception as e:
-        print(f"Failed to load videos: {e}")
-        featured_list = []
-        videos_pagination = type('P', (), {'items': [], 'pages': 0, 'has_prev': False, 'has_next': False, 'page': 1, 'prev_num': None, 'next_num': None, 'iter_pages': lambda self: []})()
-        categories = []
-
-    return render_template('videos.html', featured=featured_list, videos=videos_pagination, categories=categories, current_category=current_category)
 
 
 @app.route("/merchandise")
@@ -1707,141 +1591,6 @@ def admin_submissions_delete(submission_id):
 
 
 # Admin Testimonials
-@app.route("/admin/testimonials")
-@admin_required
-def admin_testimonials():
-    try:
-        testimonials = Testimonial.query.order_by(Testimonial.id.desc()).all()
-    except Exception as e:
-        print(f"Failed to load admin testimonials: {e}")
-        testimonials = []
-    return render_template("admin_testimonials.html", testimonials=testimonials)
-
-
-# Public testimonials page
-@app.route("/testimonials")
-def testimonials_page():
-    # If database lacks event_id column, avoid ORM select that references it
-    if not _table_has_column('testimonials', 'event_id'):
-        try:
-            rows = db.session.execute(text("SELECT id, name, title, message, image_url, published, created_at FROM testimonials WHERE published = true ORDER BY created_at DESC")).fetchall()
-            testimonials_list = [SimpleNamespace(**dict(row)) for row in rows]
-        except Exception as e:
-            print(f"Failed to load testimonials (fallback): {e}")
-            testimonials_list = []
-    else:
-        try:
-            testimonials_list = Testimonial.query.filter_by(published=True).order_by(Testimonial.created_at.desc()).all()
-        except Exception as e:
-            print(f"Failed to load testimonials: {e}")
-            testimonials_list = []
-
-    # Split featured (first 2) from the rest for the template
-    featured = testimonials_list[:2]
-    others = testimonials_list[2:]
-    return render_template("testimonials.html", testimonials=others, featured=featured)
-
-
-@app.route("/testimonials/submit", methods=["GET", "POST"])
-def submit_testimonial():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        role = request.form.get("role", "").strip()
-        content = request.form.get("content", "").strip()
-
-        if not name or not content:
-            flash("Name and testimonial are required.", "error")
-            return redirect(url_for("submit_testimonial"))
-
-        testimonial = Testimonial(
-            name=name,
-            title=role or None,
-            message=content,
-            published=False,
-            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        )
-        try:
-            db.session.add(testimonial)
-            db.session.commit()
-            flash("Thanks for sharing your experience. Your testimonial will be reviewed soon.", "success")
-            return redirect(url_for("testimonials_page"))
-        except Exception:
-            db.session.rollback()
-            app.logger.exception("Failed to save testimonial")
-            flash("Unable to submit testimonial at this time. Please try again later.", "error")
-            return redirect(url_for("testimonials_page"))
-
-    return render_template("testimonial_form.html")
-
-
-@app.route("/admin/testimonials/create", methods=["GET", "POST"])
-@admin_required
-def admin_testimonials_create():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        title = request.form.get("title", "").strip()
-        message = request.form.get("message", "").strip()
-        event_id = request.form.get("event_id", type=int) or None
-        
-        if not name or not message:
-            flash("Name and message are required.", "error")
-            return redirect(url_for("admin_testimonials_create"))
-        
-        testimonial = Testimonial(
-            event_id=event_id,
-            name=name,
-            title=title or None,
-            message=message,
-            published=True,
-            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        db.session.add(testimonial)
-        db.session.commit()
-        flash("Testimonial created successfully.", "success")
-        return redirect(url_for("admin_testimonials"))
-    
-    try:
-        events = Event.query.all()
-    except Exception as e:
-        print(f"Error fetching events: {e}")
-        events = []
-    return render_template("admin_testimonials_form.html", testimonial=None, events=events)
-
-
-@app.route("/admin/testimonials/edit/<int:testimonial_id>", methods=["GET", "POST"])
-@admin_required
-def admin_testimonials_edit(testimonial_id):
-    testimonial = Testimonial.query.get_or_404(testimonial_id)
-    
-    if request.method == "POST":
-        testimonial.name = request.form.get("name", "").strip()
-        testimonial.title = request.form.get("title", "").strip() or None
-        testimonial.message = request.form.get("message", "").strip()
-        testimonial.event_id = request.form.get("event_id", type=int) or None
-        if _table_has_column("testimonials", "published"):
-            testimonial.published = request.form.get("published") == "on"
-        db.session.commit()
-        flash("Testimonial updated successfully.", "success")
-        return redirect(url_for("admin_testimonials"))
-    
-    try:
-        events = Event.query.all()
-    except Exception as e:
-        print(f"Error fetching events: {e}")
-        events = []
-    return render_template("admin_testimonials_form.html", testimonial=testimonial, events=events)
-
-
-@app.route("/admin/testimonials/delete/<int:testimonial_id>", methods=["POST"])
-@admin_required
-def admin_testimonials_delete(testimonial_id):
-    testimonial = Testimonial.query.get_or_404(testimonial_id)
-    db.session.delete(testimonial)
-    db.session.commit()
-    flash("Testimonial deleted successfully.", "success")
-    return redirect(url_for("admin_testimonials"))
-
-
 # Admin FAQs
 @app.route("/admin/faqs")
 @admin_required
@@ -2029,106 +1778,6 @@ def admin_merchandise_delete(item_id):
     db.session.commit()
     flash("Merchandise deleted successfully.", "success")
     return redirect(url_for("admin_merchandise"))
-
-
-# Admin Videos
-@app.route("/admin/videos")
-@admin_required
-def admin_videos():
-    try:
-        videos = Video.query.order_by(Video.id.desc()).all()
-    except Exception as e:
-        print(f"Failed to load admin videos: {e}")
-        videos = []
-    return render_template("admin_videos.html", videos=videos)
-
-
-@app.route("/admin/videos/create", methods=["GET", "POST"])
-@admin_required
-def admin_videos_create():
-    if request.method == "POST":
-        title = request.form.get("title", "").strip()
-        description = request.form.get("description", "").strip()
-        url = request.form.get("url", "").strip()
-        thumbnail_url = request.form.get("thumbnail_url", "").strip()
-        event_id = request.form.get("event_id", type=int) or None
-        
-        if not title or not url:
-            flash("Title and URL are required.", "error")
-            return redirect(url_for("admin_videos_create"))
-        
-        video_kwargs = {
-            "title": title,
-            "description": description or None,
-            "url": url,
-            "thumbnail_url": thumbnail_url or None,
-            "created_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        }
-        if _table_has_column("videos", "event_id"):
-            video_kwargs["event_id"] = event_id
-        if _table_has_column("videos", "published"):
-            video_kwargs["published"] = True
-
-        video = Video(**video_kwargs)
-        try:
-            db.session.add(video)
-            db.session.commit()
-            flash("Video created successfully.", "success")
-            return redirect(url_for("admin_videos"))
-        except Exception:
-            db.session.rollback()
-            app.logger.exception("Failed to save video")
-            flash("Unable to create video. Please check the form and try again.", "error")
-            return redirect(url_for("admin_videos_create"))
-    
-    try:
-        events = Event.query.all()
-    except Exception as e:
-        print(f"Error fetching events: {e}")
-        events = []
-    return render_template("admin_videos_form.html", video=None, events=events)
-
-
-@app.route("/admin/videos/edit/<int:video_id>", methods=["GET", "POST"])
-@admin_required
-def admin_videos_edit(video_id):
-    video = Video.query.get_or_404(video_id)
-    
-    if request.method == "POST":
-        video.title = request.form.get("title", "").strip()
-        video.description = request.form.get("description", "").strip() or None
-        video.url = request.form.get("url", "").strip()
-        video.thumbnail_url = request.form.get("thumbnail_url", "").strip() or None
-        if _table_has_column("videos", "event_id"):
-            video.event_id = request.form.get("event_id", type=int) or None
-        if _table_has_column("videos", "published"):
-            video.published = request.form.get("published") == "on"
-        try:
-            db.session.commit()
-            flash("Video updated successfully.", "success")
-            return redirect(url_for("admin_videos"))
-        except Exception:
-            db.session.rollback()
-            app.logger.exception("Failed to update video")
-            flash("Unable to update video right now.", "error")
-            return redirect(url_for("admin_videos_edit", video_id=video_id))
-    
-    try:
-        events = Event.query.all()
-    except Exception as e:
-        print(f"Error fetching events: {e}")
-        events = []
-    return render_template("admin_videos_form.html", video=video, events=events)
-
-
-@app.route("/admin/videos/delete/<int:video_id>", methods=["POST"])
-@admin_required
-def admin_videos_delete(video_id):
-    video = Video.query.get_or_404(video_id)
-    db.session.delete(video)
-    db.session.commit()
-    flash("Video deleted successfully.", "success")
-    return redirect(url_for("admin_videos"))
 
 
 # Admin Gallery

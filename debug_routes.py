@@ -3,8 +3,6 @@ from app import app
 PUBLIC_ROUTES = [
     "/",
     "/events",
-    "/testimonials",
-    "/videos",
     "/merchandise",
     "/sponsors",
     "/partnerships",
@@ -15,12 +13,9 @@ PUBLIC_ROUTES = [
 ADMIN_ROUTES = [
     "/admin",
     "/admin/events",
-    "/admin/testimonials",
     "/admin/faqs",
     "/admin/merchandise",
-    "/admin/videos",
     "/admin/merchandise/create",
-    "/admin/videos/create",
 ]
 
 with app.test_client() as c:

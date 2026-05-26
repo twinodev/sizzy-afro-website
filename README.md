@@ -28,9 +28,7 @@
 - 🏠 **Dynamic Homepage** — Hero section, program highlights, and community stats
 - 👤 **Artist Profile** — Showcase the dancer's identity, story, and style
 - 📅 **Events Management** — Create, list, and manage upcoming dance events
-- 🎬 **Videos Gallery** — Embedded performance and class videos
 - 📝 **Blog / Posts** — Dynamic news, camp recaps, and community stories
-- ⭐ **Testimonials** — Community feedback stored in PostgreSQL
 - 🛍️ **Merchandise Shop** — Brand merchandise for fans and dancers
 - 🤝 **Sponsorships & Partnerships** — Dedicated pages for brand collaborations
 - 🌍 **Community Hub** — Space for dancers to connect and grow
@@ -72,7 +70,6 @@
 | 🏠 Home | [sizzyafro.me](https://www.sizzyafro.me) |
 | 👤 Profile | [sizzyafro.me/about](https://www.sizzyafro.me/about) |
 | 📅 Events | [sizzyafro.me/events](https://www.sizzyafro.me/events) |
-| 🎬 Videos | [sizzyafro.me/videos](https://www.sizzyafro.me/videos) |
 | 📝 Blog | [sizzyafro.me/posts](https://www.sizzyafro.me/posts) |
 | 🛍️ Shop | [sizzyafro.me/merchandise](https://www.sizzyafro.me/merchandise) |
 | 🌍 Community | [sizzyafro.me/community](https://www.sizzyafro.me/community) |
@@ -149,10 +146,8 @@ sizzy-afro-website/
 │   ├── index.html          # Homepage
 │   ├── about.html          # Artist profile
 │   ├── events.html         # Events page
-│   ├── videos.html         # Video gallery
 │   ├── posts.html          # Blog listing
 │   ├── post.html           # Single blog post
-│   ├── testimonials.html   # Testimonials
 │   ├── merchandise.html    # Shop
 │   ├── sponsors.html       # Sponsors
 │   ├── partnerships.html   # Partnerships
