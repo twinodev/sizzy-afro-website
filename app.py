@@ -94,6 +94,14 @@ app.config["SUPABASE_POST_BUCKET"] = os.getenv("SUPABASE_POST_BUCKET", "post-ima
 app.config["SUPABASE_GALLERY_BUCKET"] = os.getenv("SUPABASE_GALLERY_BUCKET", app.config["SUPABASE_POST_BUCKET"])
 
 
+def _get_csrf_token():
+    token = session.get("csrf_token")
+    if not token:
+        token = os.urandom(32).hex()
+        session["csrf_token"] = token
+    return token
+
+
 @app.context_processor
 def inject_csrf_token():
     return {"csrf_token": _get_csrf_token()}
