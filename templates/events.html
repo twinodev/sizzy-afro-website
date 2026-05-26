@@ -10,7 +10,7 @@
 
   <div class="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for event in events %}
-      <a href="{{ url_for('event_detail', event_id=event.id) }}" class="card group hover:shadow-lg hover:shadow-afro-500/20 transition-all">
+      <div class="card group hover:shadow-lg hover:shadow-afro-500/20 transition-all">
         {% if event.flyer_url %}
           <img src="{{ event.flyer_url }}" alt="{{ event.title }} flyer" class="w-full h-56 object-cover rounded-xl mb-4 border border-white/10 group-hover:scale-105 transition-transform" />
         {% endif %}
@@ -21,7 +21,7 @@
           <p class="mt-2 text-sm text-afro-100/80">📍 {{ event.location }}</p>
         {% endif %}
         <div class="mt-4 text-afro-300 font-semibold text-sm">Learn More →</div>
-      </a>
+      </div>
     {% else %}
       <div class="col-span-full text-center py-12">
         <p class="text-afro-100/80">No upcoming events at the moment. Check back soon!</p>

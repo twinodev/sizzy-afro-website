@@ -895,72 +895,7 @@ def events():
     return render_template("events.html", events=events_list)
 
 
-@app.route("/events/<int:event_id>")
-def event_detail(event_id):
-    # Diagnostic logging to help trace why event details may be missing in production
-    try:
-        print(f"event_detail: entering event_id={event_id}")
-        total_events = Event.query.count()
-        print(f"event_detail: total_events={total_events}")
-    except Exception as e:
-        print(f"event_detail: failed pre-query diagnostics: {e}")
-
-    try:
-        event = Event.query.get_or_404(event_id)
-        faqs = FAQ.query.filter_by(event_id=event_id).order_by(FAQ.order.asc()).all()
-        merchandise = Merchandise.query.filter_by(event_id=event_id, published=True).all()
-    except Exception as e:
-        # Distinguish not-found vs other DB errors in logs
-        print(f"Failed to load event detail {event_id}: {type(e).__name__}: {e}")
-        return render_template("event_detail.html", event=None, faqs=[], merchandise=[])
-
-    # Log what was retrieved for easier debugging in production logs
-    try:
-        print(f"event_detail: event_id={event_id} event_found={bool(event)} title={getattr(event, 'title', None)} flyer_url_present={bool(getattr(event, 'flyer_url', None))}")
-    except Exception:
-        pass
-
-    event_description = _truncate_text(
-        event.description
-        or f"Join {event.title} with Dance with Sizzy Afro at {event.location or 'our next venue'}."
-    )
-
-    seo = {
-        "title": f"{event.title} | Dance with Sizzy Afro",
-        "description": event_description,
-        "og_type": "event",
-        "og_image": _absolute_url(event.flyer_url) if event.flyer_url else _absolute_url(url_for("static", filename="images/hero.jpg")),
-        "json_ld": [
-            {
-                "@context": "https://schema.org",
-                "@type": "Event",
-                "name": event.title,
-                "description": event_description,
-                "startDate": event.event_date,
-                "location": {
-                    "@type": "Place",
-                    "name": event.location or "Venue To Be Announced",
-                },
-                "image": [
-                    _absolute_url(event.flyer_url) if event.flyer_url else _absolute_url(url_for("static", filename="images/hero.jpg"))
-                ],
-                "organizer": {
-                    "@type": "Organization",
-                    "name": "Dance with Sizzy Afro",
-                    "url": _site_url(),
-                },
-                "url": _clean_canonical_url(request.url),
-            }
-        ],
-    }
-
-    return render_template(
-        "event_detail.html",
-        event=event,
-        faqs=faqs,
-        merchandise=merchandise,
-        seo=seo,
-    )
+# Event detail page removed — individual event pages are no longer served.
 
 
 @app.route("/merchandise")
@@ -1172,16 +1107,7 @@ def sitemap_xml():
         except Exception:
             continue
 
-    try:
-        for event in Event.query.order_by(Event.id.desc()).all():
-            urls.append(
-                {
-                    "loc": _absolute_url(url_for("event_detail", event_id=event.id)),
-                    "lastmod": _safe_lastmod(event.created_at),
-                }
-            )
-    except Exception as e:
-        print(f"Sitemap events generation failed: {e}")
+    # Individual event detail pages removed; sitemap will list the main events page only.
 
     try:
         for post in Post.query.filter_by(published=True).order_by(Post.id.desc()).all():
