@@ -14,6 +14,8 @@ from flask import Flask, Response, abort, flash, redirect, render_template, requ
 from types import SimpleNamespace
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
+import io
+import csv
 
 app = Flask(__name__)
 
@@ -323,12 +325,15 @@ def init_db():
     """Initialize database tables"""
     with app.app_context():
         db.create_all()
+        _ensure_posts_published_column()
         _ensure_event_flyer_column()
         _ensure_merchandise_event_id_column()
         _ensure_merchandise_published_column()
         _ensure_testimonials_event_id_column()
+        _ensure_testimonials_published_column()
         _ensure_faqs_event_id_column()
         _ensure_videos_event_id_column()
+        _ensure_videos_published_column()
         _ensure_posts_likes_column()
         _ensure_comments_parent_id_column()
 
@@ -426,6 +431,48 @@ def _ensure_posts_likes_column():
             print("Added likes column to posts table")
     except Exception as e:
         print(f"Migration: Could not add likes to posts: {e}")
+
+
+def _ensure_posts_published_column():
+    """Add published column to posts if missing."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("posts")}
+
+        if "published" not in columns:
+            db.session.execute(text("ALTER TABLE posts ADD COLUMN published BOOLEAN DEFAULT true"))
+            db.session.commit()
+            print("Added published column to posts table")
+    except Exception as e:
+        print(f"Migration: Could not add published to posts: {e}")
+
+
+def _ensure_testimonials_published_column():
+    """Add published column to testimonials if missing."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("testimonials")}
+
+        if "published" not in columns:
+            db.session.execute(text("ALTER TABLE testimonials ADD COLUMN published BOOLEAN DEFAULT true"))
+            db.session.commit()
+            print("Added published column to testimonials table")
+    except Exception as e:
+        print(f"Migration: Could not add published to testimonials: {e}")
+
+
+def _ensure_videos_published_column():
+    """Add published column to videos if missing."""
+    try:
+        inspector = inspect(db.engine)
+        columns = {column["name"] for column in inspector.get_columns("videos")}
+
+        if "published" not in columns:
+            db.session.execute(text("ALTER TABLE videos ADD COLUMN published BOOLEAN DEFAULT true"))
+            db.session.commit()
+            print("Added published column to videos table")
+    except Exception as e:
+        print(f"Migration: Could not add published to videos: {e}")
 
 
 def _ensure_comments_parent_id_column():
@@ -1701,11 +1748,16 @@ def submit_testimonial():
             published=False,
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         )
-        db.session.add(testimonial)
-        db.session.commit()
-
-        flash("Thanks for sharing your experience. Your testimonial will be reviewed soon.", "success")
-        return redirect(url_for("testimonials_page"))
+        try:
+            db.session.add(testimonial)
+            db.session.commit()
+            flash("Thanks for sharing your experience. Your testimonial will be reviewed soon.", "success")
+            return redirect(url_for("testimonials_page"))
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Failed to save testimonial")
+            flash("Unable to submit testimonial at this time. Please try again later.", "error")
+            return redirect(url_for("testimonials_page"))
 
     return render_template("testimonial_form.html")
 
@@ -2006,10 +2058,16 @@ def admin_videos_create():
             video_kwargs["published"] = True
 
         video = Video(**video_kwargs)
-        db.session.add(video)
-        db.session.commit()
-        flash("Video created successfully.", "success")
-        return redirect(url_for("admin_videos"))
+        try:
+            db.session.add(video)
+            db.session.commit()
+            flash("Video created successfully.", "success")
+            return redirect(url_for("admin_videos"))
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Failed to save video")
+            flash("Unable to create video. Please check the form and try again.", "error")
+            return redirect(url_for("admin_videos_create"))
     
     try:
         events = Event.query.all()
@@ -2418,6 +2476,64 @@ def admin_analytics():
         daily_views=daily_views,
         top_referrers=top_referrers,
     )
+
+
+# Admin analytics test ping (creates a PageView entry) — used to verify tracking
+@app.route("/admin/analytics/ping", methods=["POST"])
+@admin_required
+def admin_analytics_ping():
+    try:
+        pv = PageView(
+            endpoint="admin_analytics_ping",
+            path=request.form.get("path", request.path),
+            method="POST",
+            user_agent=request.headers.get("User-Agent", "")[:500],
+            referrer=request.headers.get("Referer", "")[:500],
+            ip_address=_get_client_ip(),
+            created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        db.session.add(pv)
+        db.session.commit()
+        return jsonify({"ok": True, "message": "Ping recorded"}), 200
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Failed to create analytics ping")
+        return jsonify({"ok": False, "message": "Failed to record ping"}), 500
+
+
+@app.route("/admin/analytics/export")
+@admin_required
+def admin_analytics_export():
+    """Export page views as CSV (admin only)."""
+    try:
+        # Stream recent page views (limit to avoid huge exports)
+        rows = PageView.query.order_by(PageView.created_at.desc()).limit(10000).all()
+
+        si = io.StringIO()
+        writer = csv.writer(si)
+        writer.writerow(["id", "endpoint", "path", "method", "user_agent", "referrer", "ip_address", "created_at"])
+        for r in rows:
+            writer.writerow([r.id, r.endpoint, r.path, r.method, (r.user_agent or '')[:1000], (r.referrer or ''), r.ip_address, r.created_at])
+
+        output = si.getvalue()
+        return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=page_views.csv"})
+    except Exception:
+        app.logger.exception("Failed to export analytics CSV")
+        return abort(500)
+
+
+@app.route("/admin/analytics/health")
+@admin_required
+def admin_analytics_health():
+    """Return simple JSON health for analytics data."""
+    try:
+        total = PageView.query.count()
+        last = PageView.query.order_by(PageView.created_at.desc()).first()
+        last_at = last.created_at if last else None
+        return jsonify({"ok": True, "total_views": total, "last_view_at": last_at})
+    except Exception:
+        app.logger.exception("Failed to read analytics health")
+        return jsonify({"ok": False}), 500
 
 
 # Helper: check table columns cache (used to avoid runtime errors on DBs missing columns)

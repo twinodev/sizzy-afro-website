@@ -10,8 +10,19 @@
       <h1 class="text-3xl sm:text-4xl font-extrabold mt-2">Traffic & Engagement</h1>
       <p class="mt-2 text-afro-100/90">Track visitor behavior and popular content on your website.</p>
     </div>
-    <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">← Back to Dashboard</a>
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">← Back to Dashboard</a>
+      <button id="exportCsv" class="btn-secondary">Export CSV</button>
+      <button id="checkHealth" class="btn-secondary">Health</button>
+    </div>
   </div>
+
+  {% if total_views == 0 %}
+    <div class="mb-6 p-4 rounded-lg bg-yellow-500/10 border border-yellow-600/20 text-yellow-50">
+      <strong>No analytics data yet:</strong>
+      <span class="ml-2">Your site hasn't recorded any page views. Use the "Run tracking test" button below to generate a test event, or visit the site in another tab.</span>
+    </div>
+  {% endif %}
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -187,5 +198,74 @@
       <strong>Analytics Info:</strong> This dashboard tracks page views, user interactions, and traffic sources. Data is collected automatically and stored in your database. For privacy, internal routes and static files are not tracked.
     </p>
   </div>
+  
+  <!-- Quick tracking test -->
+  <div class="mt-6">
+    <h3 class="text-lg font-semibold text-afro-200 mb-2">Tracking Test</h3>
+    <p class="text-sm text-afro-100/80 mb-3">If your dashboard shows no data, run this quick test. It will create a single test PageView entry.</p>
+    <div class="flex items-center gap-3">
+      <button id="runTrackingTest" class="btn-primary">Run tracking test</button>
+      <span id="trackingTestResult" class="text-sm text-afro-100/80"></span>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const btn = document.getElementById('runTrackingTest');
+      const out = document.getElementById('trackingTestResult');
+      if (!btn) return;
+      btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        out.textContent = 'Running...';
+        try {
+          const res = await fetch('{{ url_for("admin_analytics_ping") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': window.csrfToken || ''
+            },
+            body: new URLSearchParams({ path: '/admin/analytics/manual-ping' })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            out.textContent = 'Ping recorded — refresh the page to see updated metrics.';
+          } else {
+            out.textContent = 'Ping failed: ' + (data.message || 'unknown error');
+          }
+        } catch (err) {
+          out.textContent = 'Request error: ' + err.message;
+        }
+        btn.disabled = false;
+      });
+      // Export CSV button
+      const exportBtn = document.getElementById('exportCsv');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+          window.open('{{ url_for("admin_analytics_export") }}', '_blank');
+        });
+      }
+
+      // Health check
+      const healthBtn = document.getElementById('checkHealth');
+      if (healthBtn) {
+        healthBtn.addEventListener('click', async function () {
+          healthBtn.disabled = true;
+          const resEl = document.getElementById('trackingTestResult');
+          try {
+            const res = await fetch('{{ url_for("admin_analytics_health") }}');
+            const data = await res.json();
+            if (data.ok) {
+              resEl.textContent = `Total: ${data.total_views} — Last: ${data.last_view_at || 'never'}`;
+            } else {
+              resEl.textContent = 'Health check failed';
+            }
+          } catch (err) {
+            resEl.textContent = 'Request error: ' + err.message;
+          }
+          healthBtn.disabled = false;
+        });
+      }
+    });
+  </script>
 </section>
 {% endblock %}
